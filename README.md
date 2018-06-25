@@ -50,6 +50,14 @@ Enter your user and password.  If _AUTOLOADENTER is true then you are logged aut
 
 ![autoloadone screen](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen.jpg "Autoloadone screen")
 
+* Root Folder : The folder to scan.
+* Generated File: The full path (local) of the autoinclude.php.  Even if you are not using the generation of file, you must specify it, because the program uses for determine the relative path.
+* Save File: If you check it, then generate file will be generated.  If PHP doesn't have access to save the file, then you could copy the code manually (screen Result)
+* Excluded Namespace : Namespace excluded of mapping.
+* Excluded Map : Paths excluded to scan (they are not recursives)
+
+
+
 5) The result should looks this:
 
 ![autoloadone screen2](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen2.jpg "Autoloadone screen2")
