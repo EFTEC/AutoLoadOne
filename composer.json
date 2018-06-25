@@ -1,0 +1,25 @@
+{
+  "name": "eftec/autoloadone",
+  "description": "AutoloadOne is a program that generates an autoload class for PHP.",
+  "type": "software",
+  "keywords": ["php","autoload"],
+  "homepage": "https://github.com/EFTEC/AutoLoadOne",
+  "minimum-stability": "beta",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jorge Patricio Castro Castillo",
+      "email": "jcastro@eftec.cl"
+    }],
+  "require": {
+    "php": ">=5.4"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0.0-dev"
+    }
+  },
+  "archive": {
+    "exclude": ["/test"]
+  }
+}

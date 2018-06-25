@@ -449,6 +449,7 @@ if (!$logged) {
   </head>
   
   <body>
+  <br>
     <div class="section">
       <div class="container">
         <div class="row">
@@ -514,7 +515,7 @@ LOGS;
           <div class="col-md-12">
             <div class="panel panel-primary">
               <div class="panel-heading">
-                <h3 class="panel-title">AutoIncludeOne Generator {{version}}.</h3>
+                <h3 class="panel-title"><a href="https://github.com/EFTEC/AutoLoadOne">AutoIncludeOne</a> Generator {{version}}.</h3>
               </div>             
               <div class="panel-body">
                 <form class="form-horizontal" role="form" method="post">
@@ -605,7 +606,7 @@ LOGS;
                 </form>
               </div>
               <div class="panel-footer">
-                <h3 class="panel-title">&copy; Jorge Castro. {{ms}}</h3>
+                <h3 class="panel-title">&copy; <a href="https://github.com/EFTEC/AutoLoadOne">Jorge Castro C.</a> {{ms}}</h3>
               </div> 
             </div>
           </div>

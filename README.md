@@ -1,8 +1,8 @@
 # AutoLoadOne
-AutoloadOne is a program that generates a single autoload class for PHP. This class is useful to autoload classes without using "include".
+AutoloadOne is a program that generates an autoload class for PHP. This class is useful to autoload classes without using "include".
 Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate the autoload class, include and you are ready to load any class (even classes without a namespace, classes in the namespace in different folders, multiple classes defined in a single file...).
 
-> "Autoload of classes for any project"
+> "Autoloading classes in PHP, any class, any time!"
 
 ## Composer Autoload features:
 * One class per file
@@ -44,9 +44,18 @@ define("_AUTOLOADENTER",true); // if you want to autoload (no user or password) 
 
 Enter the user and password
 
+4) Select the folder to scan, the include file to generate and press the button generate.
+
+
 ## Usage (via cli)
 
-todo
+In the shell, browser to the folder where you want to generate the code and run the next command
+
+```
+php folder/located/autoloadone.php -current
+```
+
+
 
 ## Usage (generate class)
 
