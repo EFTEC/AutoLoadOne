@@ -50,6 +50,9 @@ Enter your user and password.  If _AUTOLOADENTER is true then you are logged aut
 
 ![autoloadone screen](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen.jpg "Autoloadone screen")
 
+5) The result should looks this:
+
+![autoloadone screen2](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen2.jpg "Autoloadone screen2")
 
 ## Usage (via cli)
 
@@ -63,7 +66,7 @@ php folder/located/autoloadone.php -current
 
 ## Usage (generate class)
 
-1) include the autoinclude.php
+1) include the generated file by the previous step. ex: autoinclude.php
 
 ```php
 <?php
@@ -73,11 +76,15 @@ include "autoinclude.php";
 ```
 and that's it!.
 
+In the /test folder you could find some example to try.
+
 
 ## Version
 2018-06-24 First version
 
 ## Todo
 
-* CLI
+* CLI (more commands)
 * Clean the code.
+* The generation fails if a php file has an error.
+* Specify the extensions. By default it scans only .php files.
