@@ -88,6 +88,17 @@ In the /test folder you could find some example to try.
 
 > Note:Now, you could delete autoloadone.php
 
+## Note
+
+> If you want to exclude a class, you could add the namespace to the exclude list, or you could skip a folder.  
+> Also, if a class has the next comment, it's excluded automatically:
+
+```php
+<?php
+// @noautoload
+?>
+```
+
 ## Version
 2018-06-24 First version
 

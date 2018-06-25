@@ -6,7 +6,7 @@ define("_AUTOLOADENTER",true); // if you want to autoload (no user or password) 
 
 //*************************************************************
 $t1=microtime(true);
-define("AUTOLOADONEVERSION","1.0");
+
 
 $rooturl=__DIR__;
 $fileGen=__DIR__."/autoinclude.php";
@@ -73,22 +73,20 @@ if (php_sapi_name() == "cli") {
         }
 
 
-        //$rooturl='D:\Dropbox\www\currentproject\AutoLoadOne\test';
-        //$rooturl='D:\Dropbox\www\currentproject\termo2';
-        //$excludeNS="_AutoInclude"; // without trailing
-        //$excludePath="vendor/pchart/class"; // without trailing
-        //$fileGen="D:\Dropbox\www\currentproject\\termo2\\autoinclude.php";
     }
 
 
 
 }
 
-function genautoinclude($file,$namespaces,$namespacesAlt,$savefile) {
-    if ($savefile) {
-        $fp = fopen($file, "w");
-    }
-    $template=<<<'EOD'
+define("AUTOLOADONEVERSION","1.0");
+class AutoLoadOne {
+
+    function genautoinclude($file,$namespaces,$namespacesAlt,$savefile) {
+        if ($savefile) {
+            $fp = fopen($file, "w");
+        }
+        $template=<<<'EOD'
 <?php
 /**
  * This class is used for autocomplete.
@@ -163,185 +161,189 @@ spl_autoload_register(function ($class_name)
     $_autoInclude->auto($class_name);
 });
 EOD;
-    $custom="";
-    foreach($namespacesAlt as $k=>$v) {
-        $custom.="\t\t'$k' => '$v',\n";
-    }
-    if ($custom!="") {
-        $custom=substr($custom,0,-2);
-    }
-    $include="";
-    foreach($namespaces as $k=>$v) {
-        $include.="\t\t'$k' => '$v',\n";
-    }
-    if ($include!="") {
-        $include=substr($include,0,-2);
-    }
+        $custom="";
+        foreach($namespacesAlt as $k=>$v) {
+            $custom.="\t\t'$k' => '$v',\n";
+        }
+        if ($custom!="") {
+            $custom=substr($custom,0,-2);
+        }
+        $include="";
+        foreach($namespaces as $k=>$v) {
+            $include.="\t\t'$k' => '$v',\n";
+        }
+        if ($include!="") {
+            $include=substr($include,0,-2);
+        }
 
-    $template=str_replace("{{custom}}",$custom,$template);
-    $template=str_replace("{{include}}",$include,$template);
-    $template=str_replace("{{version}}",AUTOLOADONEVERSION,$template);
-    $template=str_replace("{{date}}", date("Y/m/d h:i:s"),$template);
+        $template=str_replace("{{custom}}",$custom,$template);
+        $template=str_replace("{{include}}",$include,$template);
+        $template=str_replace("{{version}}",AUTOLOADONEVERSION,$template);
+        $template=str_replace("{{date}}", date("Y/m/d h:i:s"),$template);
 
-    if ($savefile) {
-        fwrite($fp, $template);
-        fclose($fp);
+        if ($savefile) {
+            fwrite($fp, $template);
+            fclose($fp);
+        }
+        return $template;
+
     }
-    return $template;
-
-}
-
-function listFolderFiles($dir) {
-    $arr=array();
-    listFolderFilesAlt($dir,$arr);
-    return $arr;
-}
-function listFolderFilesAlt($dir,&$list){
-    $ffs = scandir($dir);
-    foreach ( $ffs as $ff ){
-        if ( $ff != '.' && $ff != '..' ){
-            if ( strlen($ff)>=5 ) {
-                if ( substr($ff, -4) == '.php' ) {
-                    $list[] = $dir.'/'.$ff;
+    function listFolderFiles($dir) {
+        $arr=array();
+        $this->listFolderFilesAlt($dir,$arr);
+        return $arr;
+    }
+    function listFolderFilesAlt($dir,&$list){
+        $ffs = scandir($dir);
+        foreach ( $ffs as $ff ){
+            if ( $ff != '.' && $ff != '..' ){
+                if ( strlen($ff)>=5 ) {
+                    if ( substr($ff, -4) == '.php' ) {
+                        $list[] = $dir.'/'.$ff;
+                    }
+                }
+                if( is_dir($dir.'/'.$ff) )
+                    $this->listFolderFilesAlt($dir.'/'.$ff,$list);
+            }
+        }
+        return $list;
+    }
+    /**
+     * @param $filename
+     * @return array
+     */
+    function parsePHPFile($filename) {
+        $r=array();
+        $content=file_get_contents($filename);
+        try {
+            $tokens = token_get_all($content, TOKEN_PARSE);
+            /*
+            echo $filename;
+            echo "<pre>";
+            var_dump(token_name(377));
+            var_dump(token_name(378));
+            var_dump($tokens);
+            echo "</pre>";
+            die(1);
+            */
+        } catch(Exception $ex) {
+            echo "error in $filename\n";
+            die(1);
+        }
+        foreach($tokens as $p=>$token) {
+            if (is_array($token) && ($token[0]==T_COMMENT ||$token[0]==T_DOC_COMMENT)) {
+                if (strpos($token[1],"@noautoload")!==false) {
+                    return array();
                 }
             }
-            if( is_dir($dir.'/'.$ff) )
-                listFolderFilesAlt($dir.'/'.$ff,$list);
         }
-    }
-    return $list;
-}
-
-
-
-
-/**
- * @param $filename
- * @return array
- */
-function parsePHPFile($filename) {
-    $r=array();
-    $content=file_get_contents($filename);
-    try {
-        $tokens = token_get_all($content, TOKEN_PARSE);
-        /*
-        echo $filename;
-        echo "<pre>";
-        var_dump(token_name(377));
-        var_dump(token_name(378));
-        var_dump($tokens);
-        echo "</pre>";
-        die(1);
-        */
-    } catch(Exception $ex) {
-        echo "error in $filename\n";
-        die(1);
-    }
-    foreach($tokens as $p=>$token) {
-        if (is_array($token) && ($token[0]==T_COMMENT ||$token[0]==T_DOC_COMMENT)) {
-            if (strpos($token[1],"@noautoload")!==false) {
-                return array();
+        $nameSpace="";
+        $className="";
+        foreach($tokens as $p=>$token) {
+            if (is_array($token) && $token[0]==T_NAMESPACE) {
+                // encontramos un namespace
+                $ns="";
+                for($i=$p+2;$i<$p+30;$i++) {
+                    if (is_array($tokens[$i])) {
+                        $ns.=$tokens[$i][1];
+                    } else {
+                        // tokens[$p]==';' ??
+                        break;
+                    }
+                }
+                $nameSpace=$ns;
             }
-        }
+            if (is_array($token) && $token[0]==T_CLASS) {
+                // encontramos una clase
+                for($i=$p+2;$i<$p+30;$i++) {
+                    if (is_array($tokens[$i]) && $tokens[$i][0]==T_STRING) {
+                        $className=$tokens[$i][1];
+                        break;
+                    }
+                }
+                $r[]=array('namespace'=>trim($nameSpace),'classname'=>trim($className));
+            }
+
+        } // foreach
+        return $r;
     }
-    $nameSpace="";
-    $className="";
-    foreach($tokens as $p=>$token) {
-        if (is_array($token) && $token[0]==T_NAMESPACE) {
-            // encontramos un namespace
-            $ns="";
-            for($i=$p+2;$i<$p+30;$i++) {
-                if (is_array($tokens[$i])) {
-                    $ns.=$tokens[$i][1];
-                } else {
-                    // tokens[$p]==';' ??
+    function genPath($path) {
+        $path=str_replace("\\","/",$path);
+        //$path.="/test/folder";
+        global $baseGen;
+        if (strpos($path,$baseGen)==0) {
+            $min1=strripos($path,"/");
+            $min2=strripos($baseGen,"/");
+            //$min=min(strlen($path),strlen($baseGen));
+            $min=min($min1,$min2);
+            $baseCommon=$min;
+            for($i=0;$i<$min;$i++) {
+                if (substr($path,0,$i)!=substr($baseGen,0,$i)) {
+                    $baseCommon=$i-2;
+
                     break;
                 }
             }
-            $nameSpace=$ns;
+            //$sub=str_replace($path,"",$baseGen);
+
+            // cuanto hay que retroceder
+
+            $c=substr_count(substr($baseGen,$baseCommon),"/");
+            $r=str_repeat("/..",$c);
+            // hay que avanzar
+            $r2=substr($path,$baseCommon);
+            /*
+            echo "common:".substr($baseGen,0,$baseCommon)."<br>";
+            echo $path."<br>";
+            echo $baseGen."<br>";
+            echo $r.$r2."<br>";
+            */
+            return $r.$r2;
+            //die(1);
+        } else {
+            /*
+            echo $path."<br>";
+            echo $baseGen."<br>";
+            die(1);
+            */
+            $r=substr($path, strlen($baseGen));
         }
-        if (is_array($token) && $token[0]==T_CLASS) {
-            // encontramos una clase
-            for($i=$p+2;$i<$p+30;$i++) {
-                if (is_array($tokens[$i]) && $tokens[$i][0]==T_STRING) {
-                    $className=$tokens[$i][1];
-                    break;
-                }
-            }
-            $r[]=array('namespace'=>trim($nameSpace),'classname'=>trim($className));
-        }
-
-    } // foreach
-    return $r;
-}
-
-function genPath($path) {
-    $path=str_replace("\\","/",$path);
-    //$path.="/test/folder";
-    global $baseGen;
-    if (strpos($path,$baseGen)==0) {
-        $min1=strripos($path,"/");
-        $min2=strripos($baseGen,"/");
-        //$min=min(strlen($path),strlen($baseGen));
-        $min=min($min1,$min2);
-        $baseCommon=$min;
-        for($i=0;$i<$min;$i++) {
-            if (substr($path,0,$i)!=substr($baseGen,0,$i)) {
-                $baseCommon=$i-2;
-
-                break;
-            }
-        }
-        //$sub=str_replace($path,"",$baseGen);
-
-        // cuanto hay que retroceder
-
-        $c=substr_count(substr($baseGen,$baseCommon),"/");
-        $r=str_repeat("/..",$c);
-        // hay que avanzar
-        $r2=substr($path,$baseCommon);
-        /*
-        echo "common:".substr($baseGen,0,$baseCommon)."<br>";
-        echo $path."<br>";
-        echo $baseGen."<br>";
-        echo $r.$r2."<br>";
-        */
-        return $r.$r2;
-        //die(1);
-    } else {
-        /*
-        echo $path."<br>";
-        echo $baseGen."<br>";
-        die(1);
-        */
-        $r=substr($path, strlen($baseGen));
+        return $r;
     }
-    return $r;
-}
-
-/**
- * returns dir name linux way
- * @param $fullUrl
- * @return mixed|string
- */
-function dirNameLinux($fullUrl) {
-    $dir = dirname($fullUrl);
-    $dir=str_replace("\\","/",$dir);
-    return $dir;
-}
-
-function addLog($txt) {
-    global $log;
-    if (php_sapi_name() == "cli") {
-        echo $txt . "\n";
-    } else {
-        $log .= $txt . "\n";
+    /**
+     * returns dir name linux way
+     * @param $fullUrl
+     * @return mixed|string
+     */
+    function dirNameLinux($fullUrl) {
+        $dir = dirname($fullUrl);
+        $dir=str_replace("\\","/",$dir);
+        return $dir;
     }
+
+    function addLog($txt) {
+        global $log;
+        if (php_sapi_name() == "cli") {
+            echo $txt . "\n";
+        } else {
+            $log .= $txt . "\n";
+        }
+    }
+
+
 }
+
+$auto=new AutoLoadOne();
+
+
+
+
+
+
 
 if ($rooturl) {
-    $baseGen=dirNameLinux($fileGen);
-    $files = listFolderFiles($rooturl);
+    $baseGen=$auto->dirNameLinux($fileGen);
+    $files = $auto->listFolderFiles($rooturl);
 
 
     $ns = array();
@@ -362,11 +364,11 @@ if ($rooturl) {
     $num = 0;
     if ($button) {
         foreach ($files as $f) {
-            $pArr = parsePHPFile($f);
-            $dir = dirNameLinux($f);
-            $dir = genPath($dir);
-            $full = genPath($f);
-            $urlFull = dirNameLinux($full);
+            $pArr = $auto->parsePHPFile($f);
+            $dir = $auto->dirNameLinux($f);
+            $dir = $auto->genPath($dir);
+            $full = $auto->genPath($f);
+            $urlFull = $auto->dirNameLinux($full);
             $basefile = basename($f);
             //var_dump($f);
             //var_dump($dir);
@@ -387,11 +389,11 @@ if ($rooturl) {
 
                         if ((!in_array($nsp, $excludeNSArr) || $nsp=="") && !in_array($dir, $excludePathArr)) {
                             if ($nsp=="") {
-                                addLog("Adding Full (empty namespace): $altUrl=$full");
+                                $auto->addLog("Adding Full (empty namespace): $altUrl=$full");
                                 $nsAlt[$altUrl] = $full;
                             } else {
                                 $ns[$nsp] = $dir;
-                                addLog("Adding Folder: $nsp=$dir");
+                                $auto->addLog("Adding Folder: $nsp=$dir");
                             }
 
                         }
@@ -401,13 +403,13 @@ if ($rooturl) {
                         // b) if namespace is already defined for a different folder.
                         // c) multiple namespaces
                         if (isset($nsAlt[$altUrl])) {
-                            addLog("Error Conflict:Class on $altUrl already defined.");
+                            $auto->addLog("Error Conflict:Class on $altUrl already defined.");
                             if ($stop) {
                                 die(1);
                             }
                         } else {
                             if ((!in_array($altUrl, $excludeNSArr) || $nsp=="") && !in_array($urlFull, $excludePathArr)) {
-                                addLog("Adding Full: $altUrl=$full");
+                                $auto->addLog("Adding Full: $altUrl=$full");
                                 $nsAlt[$altUrl] = $full;
                             }
                         }
@@ -416,10 +418,10 @@ if ($rooturl) {
                 $fShort = substr($f, strlen($rooturl));
             }
             if (count($pArr)==0) {
-                addLog("Ignoring $full");
+                $auto->addLog("Ignoring $full");
             }
         }
-        $result = genautoinclude($fileGen, $ns, $nsAlt, $savefile);
+        $result = $auto->genautoinclude($fileGen, $ns, $nsAlt, $savefile);
     }
 
 
