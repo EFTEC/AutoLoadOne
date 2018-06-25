@@ -32,6 +32,8 @@ Contrary to other alternatives, it supports the easiest way to autoload classes 
 
 2) edit the first files. Change the user, password and autoloadenter if it's required.
 
+![autoloadone login](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/login.jpg "Autoloadone logon")
+
 
 ```php
 <?php
@@ -45,6 +47,8 @@ define("_AUTOLOADENTER",true); // if you want to autoload (no user or password) 
 Enter the user and password
 
 4) Select the folder to scan, the include file to generate and press the button generate.
+
+![autoloadone screen](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen.jpg "Autoloadone screen")
 
 
 ## Usage (via cli)
