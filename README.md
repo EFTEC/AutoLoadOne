@@ -104,7 +104,8 @@ In the /test folder you could find some example to try.
 PHP 7.1.18 + Windows 10 + SSD.
 
 ![autoloadone benchmark](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/speed.jpg "Autoloadone benchmarj")  
-More is better.
+
+_More is better._
 
 
 > I did a synthetic benchmark by loading different classes and reading the performance of it. Since my machine has a SSD disk then, the impact of the disk is minimum in comparison with a mechanical hard disk.
