@@ -28,12 +28,9 @@ Contrary to other alternatives, it supports the easiest way to autoload classes 
 
 ## Usage (generate code via Web)
 
-1) copy the file autoloadone.php somewhere.
+1) copy the file **autoloadone.php** somewhere.
 
-2) edit the first files. Change the user, password and autoloadenter if it's required.
-
-![autoloadone login](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/login.jpg "Autoloadone logon")
-
+2) For security, you couldedit the first lines of the class **autoloadone.php**. Change the user, password and autoloadenter if it's required.
 
 ```php
 <?php
@@ -44,7 +41,10 @@ define("_AUTOLOADENTER",true); // if you want to autoload (no user or password) 
 ```
 3) Start the browser
 
-Enter the user and password
+Enter your user and password.  If _AUTOLOADENTER is true then you are logged automatically.
+
+![autoloadone login](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/login.jpg "Autoloadone logon")
+
 
 4) Select the folder to scan, the include file to generate and press the button generate.
 
