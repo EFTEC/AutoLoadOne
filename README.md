@@ -86,6 +86,7 @@ and that's it!.
 
 In the /test folder you could find some example to try.
 
+> Note:Now, you could delete autoloadone.php
 
 ## Version
 2018-06-24 First version
@@ -96,3 +97,4 @@ In the /test folder you could find some example to try.
 * Clean the code.
 * The generation fails if a php file has an error.
 * Specify the extensions. By default it scans only .php files.
+* While the program has a build-in-security measure, however I suggest to protect add new layers of protection such as putting autoloadone.php outside of the public folder.
