@@ -1,4 +1,5 @@
 <?php
+namespace eftec\AutoLoadOne;
 //*************************************************************
 define("_AUTOLOADUSER","autoloadone");
 define("_AUTOLOADPASSWORD","autoloadone");
@@ -361,7 +362,6 @@ if ($rooturl) {
 
     $log = "";
     $result = "";
-    $num = 0;
     if ($button) {
         foreach ($files as $f) {
             $pArr = $auto->parsePHPFile($f);
@@ -415,7 +415,6 @@ if ($rooturl) {
                         }
                     }
                 }
-                $fShort = substr($f, strlen($rooturl));
             }
             if (count($pArr)==0) {
                 $auto->addLog("Ignoring $full");
