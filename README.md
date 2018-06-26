@@ -1,8 +1,29 @@
+[![Packagist](https://img.shields.io/packagist/l/doctrine/orm.svg)]()
+[![Maintenance](https://img.shields.io/maintenance/yes/2018.svg)]()
+[![npm](https://img.shields.io/badge/npm-%3E4.1-blue.svg)]()
+[![php](https://img.shields.io/badge/php->5.4-green.svg)]()
+[![php](https://img.shields.io/badge/php-7.x-green.svg)]()
+[![CocoaPods](https://img.shields.io/badge/docs-40%25-yellow.svg)]()
+
+
 # AutoLoadOne
 AutoloadOne is a program that generates an autoload class for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.
 Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate the autoload class, include and you are ready to load any class (even classes without a namespace, classes in the namespace in different folders, multiple classes defined in a single file...).
 
 > "Universal Autoloading classes in PHP, any class, any time!"
+
+## How it Works?
+
+1) Run AutoLoadOne.php as CLI or as Web.
+2) AutoLoadOne will generate a single file called autoload.php
+3) Include autoload.php in your project code and start using it.
+
+## When i should re-run AutoLoadOne?
+
+You don't need to run it again if you are adding a new class with the same namespace in the same folder.
+
+Also, you could edit autoload.php manually by adding more classes and namespaces.
+
 
 ## Composer Autoload features:
 * One class per file
@@ -152,8 +173,8 @@ Deny from all
 
 
 ## Version
-1.1 2018-06-26 Some fixes.
-1.0 2018-06-24 First version
+* 1.1 2018-06-26 Some fixes.  
+* 1.0 2018-06-24 First version  
 
 ## Todo
 
