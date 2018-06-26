@@ -30,26 +30,26 @@ Also, you could edit autoload.php manually by adding more classes and namespaces
 Or you could run AutoLoadOne.php again and replace the old autoload.php
 
 ## Composer Autoload features:
-* One class per file
-* One Namespace per file.
-* The file must have a namespace.
-* It requires composer.
-* It validates the file each file the class is loaded per user.
-* The structure of the folders should be pre-defined.
-* Support CLI
+:black_square_button: One class per file  
+:black_square_button: One Namespace per file.  
+:black_square_button: The file must have a namespace.  
+:black_square_button: It requires composer.  
+:black_square_button: It validates the file each file the class is loaded per user.  
+:black_square_button: The structure of the folders should be pre-defined.  
+:black_square_button: Support CLI  
 
 ## AutoLoadOne extended features:
-* :white_check_mark: One or Many classes per file.
-* :white_check_mark: One or many namespaces per file.
-* The file could contain optionally a namespace.
-* It only requires PHP
-* The folder structure and classes are validated once.
-* If you add a class that shares a previous folder and uses the previous namespace, then you don't need to run the generator.
-* You could use any structure of folder. It's recommended to use the same folder for the same namespace but it's not a requisite.
-* Support CLI and Web-UI.
-* It doesn't require APCU, lock files or cache.
-* It´s compatible with practically any project, including a project that uses Composer's autoload.
-* PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.
+:white_check_mark: One or Many classes per file.  
+:white_check_mark: One or many namespaces per file.  
+:white_check_mark: The file could contain optionally a namespace.  
+:white_check_mark: It only requires PHP  
+:white_check_mark: The folder structure and classes are validated once.  
+:white_check_mark: If you add a class that shares a previous folder and uses the previous namespace, then you don't need to run the generator.  
+:white_check_mark: You could use any structure of folder. It's recommended to use the same folder for the same namespace but it's not a requisite.  
+:white_check_mark: Support CLI and Web-UI.  
+:white_check_mark: It doesn't require APCU, lock files or cache.  
+:white_check_mark: It´s compatible with practically any project, including a project that uses Composer's autoload.  
+:white_check_mark: PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.  
 
 ## Usage (generate code via Web)
 
