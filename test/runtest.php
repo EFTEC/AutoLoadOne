@@ -4,7 +4,7 @@ namespace dummy;
 use ClassWithoutNameSpace;
 
 define("_AUTOLOADONEDEBUG",true);
-include "folder/subfolder/autoinclude.php";
+include "autoload.php";
 
 
 

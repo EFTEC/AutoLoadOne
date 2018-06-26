@@ -191,7 +191,7 @@ class _AutoLoad
      * _AutoLoad constructor.
      * @param bool $debug
      */
-    public function __construct(bool $debug=false)
+    public function __construct($debug=false)
     {
         $this->debug = $debug;
     }
@@ -222,9 +222,7 @@ class _AutoLoad
      */
     public function loadIfExists($filename)
     {
-        if (@file_exists(__DIR__."\\".$filename)) {
-            include __DIR__."\\".$filename;
-        } else {
+        if((@include __DIR__."\\".$filename) === false) {
             if ($this->debug) {
                 throw  new Exception("AutoLoadOne Error: Loading file [".__DIR__."\\".$filename."] for class [".basename($filename)."]");
             } else {
@@ -343,7 +341,8 @@ EOD;
             }
             if (is_array($token) && $token[0]==T_CLASS) {
                 // encontramos una clase
-                for($i=$p+2;$i<$p+30;$i++) {
+                $min=min($p+30,count($tokens)-1);
+                for($i=$p+2;$i<$min;$i++) {
                     if (is_array($tokens[$i]) && $tokens[$i][0]==T_STRING) {
                         $className=$tokens[$i][1];
                         break;
@@ -481,7 +480,8 @@ EOD;
                         $this->addLog("Ignoring $full. Reason: No class found on file.");
                     }
                 }
-                $this->result = $this->genautoload($this->dirNameLinux($this->fileGen)."/autoload.php", $ns, $nsAlt);
+
+                $this->result = $this->genautoload($this->fileGen."/autoload.php", $ns, $nsAlt);
             }
             $this->addLog("Stat number of classes: ".$this->statNumClass);
             $this->addLog("Stat number of namespaces: ".count($this->statNameSpaces));
