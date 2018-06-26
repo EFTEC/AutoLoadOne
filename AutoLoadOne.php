@@ -8,7 +8,7 @@ define("_AUTOLOADPASSWORD","autoloadone");
 define("_AUTOLOADENTER",true); // if you want to auto login (skip user and password) then set to true
 
 //*************************************************************
-
+ini_set('max_execution_time', 300); // Limit of 5 minutes.
 /**
  * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
@@ -33,6 +33,10 @@ class AutoLoadOne {
     var $logged=false;
     var $current="";
     var $t1=0;
+    var $debugMode=false;
+    var $statNumClass=0;
+    var $statNumPHP=0;
+    var $statNameSpaces=array();
     private $excludeNSArr;
     private $excludePathArr;
     private $baseGen;
@@ -53,6 +57,7 @@ class AutoLoadOne {
         $this->current=$this->getParameterCli("current",true);
         $this->excludeNS=$this->getParameterCli("excludens");
         $this->excludePath=$this->getParameterCli("excludepath");
+        $this->debugMode=$this->getParameterCli("debug");
     }
 
     /**
@@ -113,6 +118,7 @@ class AutoLoadOne {
         echo "------------------------------------------------------------------\n";
     }
     function initWeb() {
+        @ob_start();
         // Not in cli-mode
         @session_start();
         $this->logged=@$_SESSION["log"];
@@ -129,6 +135,7 @@ class AutoLoadOne {
             }
             @session_write_close();
         } else {
+            $this->debugMode=isset($_GET['debug'])?true:false;
             $this->rooturl=@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl;
             $this->fileGen=@$_POST["fileGen"]?$_POST["fileGen"]:$this->fileGen;
             $this->savefile=@$_POST["savefile"];
@@ -291,9 +298,13 @@ EOD;
      */
     function parsePHPFile($filename) {
         $r=array();
-        $content=file_get_contents($filename);
         try {
-            $tokens = token_get_all($content, TOKEN_PARSE);
+            $content=file_get_contents($filename);
+            $err="";
+            if ($this->debugMode) {
+                echo $filename . " trying token...<br>";
+            }
+            $tokens = token_get_all($content);
             /*
             echo $filename;
             echo "<pre>";
@@ -304,7 +315,7 @@ EOD;
             die(1);
             */
         } catch(Exception $ex) {
-            echo "error in $filename\n";
+            echo "Error in $filename\n";
             die(1);
         }
         foreach($tokens as $p=>$token) {
@@ -423,6 +434,11 @@ EOD;
 
                         $nsp = $p['namespace'];
                         $cs = $p['classname'];
+                        $this->statNameSpaces[$nsp]=1;
+                        $this->statNumPHP++;
+                        if ($cs!='') {
+                            $this->statNumClass++;
+                        }
 
                         $altUrl = ($nsp != "") ? $nsp . '\\' . $cs : $cs;
 
@@ -461,21 +477,24 @@ EOD;
                         }
                     }
                     if (count($pArr)==0) {
-                        $this->addLog("Ignoring $full");
+                        $this->statNumPHP++;
+                        $this->addLog("Ignoring $full. Reason: No class found on file.");
                     }
                 }
                 $this->result = $this->genautoload($this->dirNameLinux($this->fileGen)."/autoload.php", $ns, $nsAlt);
             }
-
+            $this->addLog("Stat number of classes: ".$this->statNumClass);
+            $this->addLog("Stat number of namespaces: ".count($this->statNameSpaces));
+            $this->addLog("Stat number of PHP Files: ".$this->statNumPHP);
 
         } else {
             $this->addLog("No folder specified");
         }
-
-
     }
     function render() {
-
+        if ($this->debugMode) {
+            ob_clean();
+        }
 
         if (php_sapi_name() == "cli") {
             $t2=microtime(true);
