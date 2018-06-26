@@ -83,7 +83,7 @@ Enter your user and password.  If _AUTOLOADENTER is true then you are logged aut
 ![autoloadone screen](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen.jpg "Autoloadone screen")
 
 * Root Folder : The folder to scan.
-* Generated File: The full path (local) of the autoinclude.php.  Even if you are not using the generation of file, you must specify it, because the program uses for determine the relative path.
+* Generated File: The full path (local) of the autoload.php.  Even if you are not using the generation of file, you must specify it, because the program uses for determine the relative path.
 * Save File: If you check it, then generate file will be generated.  If PHP doesn't have access to save the file, then you could copy the code manually (screen Result)
 * Excluded Namespace : Namespace excluded of mapping.
 * Excluded Map : Paths excluded to scan (they are not recursives)
@@ -121,12 +121,12 @@ php folder/located/autoloadone.php -current
 ## Usage (generate class)
 
 :one:  
-include the generated file by the previous step. ex: autoinclude.php
+include the generated file by the previous step. ex: autoload.php
 
 ```php
 <?php
 define("_AUTOLOADONEDEBUG",true); // this line is optional.
-include "autoinclude.php";
+include "autoload.php";
 ?>
 ```
 and that's it!.
@@ -166,7 +166,7 @@ _More is better._
 
 > AutoLoadOne.php is not safe (because it writes a generate file), it doesn't have access to the database, neither it allows to write any content to the file.   But, it could overwrite an exist code and put down a system.
 
-> However, the generate file is safe (autoinclude.php) and you could expose to the net.
+> However, the generate file is safe (autoload.php) and you could expose to the net.
 
 * Change the user and password and set _AUTOLOADENTER to false.
 * Or, Don't put this file in your public website.
@@ -188,7 +188,7 @@ Deny from all
 
 
 ## Version
-* 1.1 2018-06-26 Some fixes.  
+* 1.1 2018-06-26 Some fixes. 
 * 1.0 2018-06-24 First version  
 
 ## Todo
