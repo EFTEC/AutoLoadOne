@@ -6,8 +6,8 @@
 [![CocoaPods](https://img.shields.io/badge/docs-40%25-yellow.svg)]()
 
 
-# AutoLoadOne
-AutoloadOne is a program that generates an autoload class for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.
+# PHP Auto Include AutoLoadOne Generator
+AutoloadOne is a program that generates an autoload class (Auto Include) for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.
 Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate the autoload class, include and you are ready to load any class (even classes without a namespace, classes in the namespace in different folders, multiple classes defined in a single file...).  
 
 AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.
@@ -17,7 +17,7 @@ AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use 
 ## How it Works?
 
 1) Run AutoLoadOne.php as CLI or as Web.
-2) AutoLoadOne will generate a single file called autoload.php. For the record, it takes mere 1.5 seconds to scan Wordpress. 
+2) AutoLoadOne will generate a single file called autoload.php based in your project. For the record, it takes mere 1.5 seconds to scan Wordpress and yes, it is compatible with Wordpress.
 3) Include autoload.php in your project code and start using it.
 
 ## When i should re-run AutoLoadOne?

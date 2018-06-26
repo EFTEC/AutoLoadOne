@@ -479,7 +479,7 @@ EOD;
 
         if (php_sapi_name() == "cli") {
             $t2=microtime(true);
-            echo "\n".(round(($t2-$this->t1)*1000)/1000)."ms. Finished\n";
+            echo "\n".(round(($t2-$this->t1)*1000)/1000)." sec. Finished\n";
 
 
         } else {
@@ -682,7 +682,7 @@ TEM1;
                 $web=str_replace("{{result}}",$this->result,$web);
 
                 $t2=microtime(true);
-                $ms=(round(($t2-$this->t1)*1000)/1000)."ms.";
+                $ms=(round(($t2-$this->t1)*1000)/1000)." sec.";
 
                 $web=str_replace("{{ms}}",$ms,$web);
                 echo $web;
