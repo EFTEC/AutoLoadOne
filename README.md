@@ -17,9 +17,10 @@ AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use 
 
 ## How it Works?
 
-:one: Run AutoLoadOne.php as CLI or as Web.  
-:two: AutoLoadOne will generate a single file called autoload.php based in your project. For the record, it takes mere 1.5 seconds to scan Wordpress and yes, it is compatible with Wordpress.  
-:three: Include autoload.php in your project code and start using it.  
+:one:  
+Run AutoLoadOne.php as CLI or as Web.  
+:two:   AutoLoadOne will generate a single file called autoload.php based in your project. For the record, it takes mere 1.5 seconds to scan Wordpress and yes, it is compatible with Wordpress.  
+:three:   Include autoload.php in your project code and start using it.  
 
 ## When i should re-run AutoLoadOne?
 
@@ -53,9 +54,10 @@ Or you could run AutoLoadOne.php again and replace the old autoload.php
 
 ## Usage (generate code via Web)
 
-:one: copy the file **autoloadone.php** somewhere.
+:one:  
+copy the file **autoloadone.php** somewhere.
 
-:two: For security, you couldedit the first lines of the class **autoloadone.php**. Change the user, password and autoloadenter if it's required.
+:two:   For security, you couldedit the first lines of the class **autoloadone.php**. Change the user, password and autoloadenter if it's required.
 
 ```php
 <?php
@@ -64,7 +66,7 @@ define("_AUTOLOADPASSWORD","autoloadone");
 define("_AUTOLOADENTER",true); // if you want to autoload (no user or password) then set to true
 ?>
 ```
-:three: Start the browser
+:three:   Start the browser
 
 Enter your user and password.  If _AUTOLOADENTER is true then you are logged automatically.
 
@@ -112,7 +114,8 @@ php folder/located/autoloadone.php -current
 
 ## Usage (generate class)
 
-:one: include the generated file by the previous step. ex: autoinclude.php
+:one:  
+include the generated file by the previous step. ex: autoinclude.php
 
 ```php
 <?php
