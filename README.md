@@ -1,8 +1,8 @@
 # AutoLoadOne
-AutoloadOne is a program that generates an autoload class for PHP. This class is useful to autoload classes without using "include".
+AutoloadOne is a program that generates an autoload class for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.
 Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate the autoload class, include and you are ready to load any class (even classes without a namespace, classes in the namespace in different folders, multiple classes defined in a single file...).
 
-> "Autoloading classes in PHP, any class, any time!"
+> "Universal Autoloading classes in PHP, any class, any time!"
 
 ## Composer Autoload features:
 * One class per file
@@ -46,7 +46,7 @@ Enter your user and password.  If _AUTOLOADENTER is true then you are logged aut
 ![autoloadone login](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/login.jpg "Autoloadone logon")
 
 
-4) Select the folder to scan, the include file to generate and press the button generate.
+4) Select the folder to scan, then select the file to generate and finally press the button GENERATE.
 
 ![autoloadone screen](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen.jpg "Autoloadone screen")
 
@@ -118,6 +118,34 @@ _More is better._
 
 * CLI (more commands)
 * Clean the code.
+* Convert to a single class.
+* External folder/library (relative or absolute path)
 * The generation fails if a php file has an error.
 * Specify the extensions. By default it scans only .php files.
-* While the program has a build-in-security measure, however I suggest to protect add new layers of protection such as putting autoloadone.php outside of the public folder.
+
+## Security
+
+> While the program has a build-in-security measure, however I suggest to protect adding new layers of security such as locating the AutoLoadOne.php file outside of the public/web folder.
+
+> AutoLoadOne.php is not safe (because it writes a generate file), it doesn't have access to the database, neither it allows to write any content to the file.   But, it could overwrite an exist code and put down a system.
+
+> However, the generate file is safe (autoinclude.php) and you could expose to the net.
+
+* Change the user and password and set _AUTOLOADENTER to false.
+* Or, Don't put this file in your public website.
+* Or, change the filename.
+* Or, you could block the access to the file using .htaccess or similar.  
+
+```
+RewriteEngine On
+RewriteBase /
+
+<Files "AutoLoadOne.php">
+Order Allow,Deny
+Deny from all
+</Files>
+```
+
+* Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
+
+

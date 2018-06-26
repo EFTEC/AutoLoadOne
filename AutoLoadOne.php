@@ -1,112 +1,186 @@
 <?php
 namespace eftec\AutoLoadOne;
 //*************************************************************
+use Exception;
+
 define("_AUTOLOADUSER","autoloadone");
 define("_AUTOLOADPASSWORD","autoloadone");
-define("_AUTOLOADENTER",true); // if you want to autoload (no user or password) then set to true
+define("_AUTOLOADENTER",true); // if you want to auto login (skip user and password) then set to true
 
 //*************************************************************
-$t1=microtime(true);
 
-
-$rooturl=__DIR__;
-$fileGen=__DIR__."/autoinclude.php";
-$savefile=0;
-$stop=0;
-$button=0;
-$excludeNS="";
-$excludePath="";
-$log="";
-$result="";
-// @noautoload
 /**
+ * Class AutoLoadOne
+ * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
+ * @version 1.1
  * @noautoload
+ * @package eftec\AutoLoadOne
+ *
  */
-if (php_sapi_name() == "cli") {
-    // In cli-mode
-    var_dump($argv);
-    if (array_search("-current",$argv)!==false) {
-        $rooturl=getcwd();
-        $fileGen=getcwd()."/autoinclude.php";
-        $savefile=1;
-        $stop=0;
-        $button=1;
-        $excludeNS="";
-        $excludePath="";
-        echo "------------------------------------------------------------------\n";
-        echo " AutoIncludeOne Generator ".AUTOLOADONEVERSION." (c) Jorge Castro\n";
-        echo "------------------------------------------------------------------\n";
-        echo "COMMAND.COM\n";
-        echo "LOAD BIOS\n";
-        echo "-folder ".$rooturl." (folder to scan)\n";
-        echo "-filegen ".$fileGen." (file to generate)\n";
-        echo "-save ".($savefile?"yes":"no")." (save filegen)\n";
-        echo "-excludens ".$excludeNS." (namespace excluded)\n";
-        echo "-excludepath ".$excludePath."\n";
-        echo "------------------------------------------------------------------\n";
-    }
-} else {
-    // Not in cli-mode
-    @session_start();
-    $logged=@$_SESSION["log"];
-    if (!$logged) {
-        $user=@$_POST["user"];
-        $password=@$_POST["password"];
-        if (($user==_AUTOLOADUSER && $password=_AUTOLOADPASSWORD) || _AUTOLOADENTER ) {
-            $_SESSION["log"]="1";
-            $logged=1;
-        } else {
-            sleep(1); // sleep a second
-            $_SESSION["log"]="0";
-            @session_destroy();
-        }
-        @session_write_close();
-    } else {
-        $rooturl=@$_POST["rooturl"]?$_POST["rooturl"]:$rooturl;
-        $fileGen=@$_POST["fileGen"]?$_POST["fileGen"]:$fileGen;
-        $savefile=@$_POST["savefile"];
-        $stop=@$_POST["stop"];
-        $button=@$_POST["button"];
-        if ($button=="logout") {
-            @session_destroy();
-            $logged=0;
-            @session_write_close();
-        }
-
-
-    }
-
-
-
-}
-
-define("AUTOLOADONEVERSION","1.0");
 class AutoLoadOne {
 
-    function genautoinclude($file,$namespaces,$namespacesAlt,$savefile) {
-        if ($savefile) {
-            $fp = fopen($file, "w");
+    const VERSION="1.1";
+
+    var $rooturl=__DIR__;
+    var $fileGen="";
+    var $savefile=0;
+    var $stop=0;
+    var $button=0;
+    var $excludeNS="";
+    var $excludePath="";
+    var $log="";
+    var $result="";
+    var $logged=false;
+    var $current="";
+    var $t1=0;
+    private $excludeNSArr;
+    private $excludePathArr;
+    private $baseGen;
+
+    /**
+     * AutoLoadOne constructor.
+     */
+    public function __construct()
+    {
+        $this->fileGen=__DIR__;
+        $this->t1=microtime(true);
+    }
+    function getAllParametersCli() {
+        $this->rooturl=$this->getParameterCli("folder");
+        $this->fileGen=$this->getParameterCli("filegen");
+        $this->savefile=$this->getParameterCli("save");
+        $this->stop=$this->getParameterCli("stop");
+        $this->current=$this->getParameterCli("current",true);
+        $this->excludeNS=$this->getParameterCli("excludens");
+        $this->excludePath=$this->getParameterCli("excludepath");
+    }
+
+    /**
+     * @param $key
+     * @param string $default is the defalut value is the parameter is set without value.
+     * @return string
+     */
+    function getParameterCli($key,$default='') {
+        global $argv;
+        $p=array_search("-".$key,$argv);
+        if ($p===false) return "";
+        if ($default!=='') return $default;
+        if (count($argv)>=$p+1) {
+
+            return $argv[$p + 1];
+        }
+        return "";
+    }
+
+
+    function initSapi() {
+        global $argv;
+        echo "------------------------------------------------------------------\n";
+        echo " AutoLoadOne Generator ".$this::VERSION." (c) Jorge Castro\n";
+        echo "------------------------------------------------------------------\n";
+
+
+        if (count($argv)<2) {
+            // help
+            echo "-current (scan and generates files from the current folder)\n";
+            echo "-folder (folder to scan)\n";
+            echo "-filegen (folder where autoload.php will be generate)\n";
+            echo "-save (save the file to generate)\n";
+            echo "-excludens (namespace excluded)\n";
+            echo "-excludepath (path excluded)\n";
+            echo "------------------------------------------------------------------\n";
+        } else {
+            $this->getAllParametersCli();
+            $this->fileGen=($this->fileGen=="")?getcwd():$this->fileGen;
+            $this->button=1;
+        }
+        if ($this->current) {
+            $this->rooturl=getcwd();
+            $this->fileGen=getcwd();
+            $this->savefile=1;
+            $this->stop=0;
+            $this->button=1;
+            $this->excludeNS="";
+            $this->excludePath="";
+        }
+
+        echo "-folder ".$this->rooturl." (folder to scan)\n";
+        echo "-filegen ".$this->fileGen." (folder where autoload.php will be generate)\n";
+        echo "-save ".($this->savefile?"yes":"no")." (save filegen)\n";
+        echo "-excludens ".$this->excludeNS." (namespace excluded)\n";
+        echo "-excludepath ".$this->excludePath." (path excluded)\n";
+        echo "------------------------------------------------------------------\n";
+    }
+    function initWeb() {
+        // Not in cli-mode
+        @session_start();
+        $this->logged=@$_SESSION["log"];
+        if (!$this->logged) {
+            $user=@$_POST["user"];
+            $password=@$_POST["password"];
+            if (($user==_AUTOLOADUSER && $password==_AUTOLOADPASSWORD) || _AUTOLOADENTER ) {
+                $_SESSION["log"]="1";
+                $this->logged=1;
+            } else {
+                sleep(1); // sleep a second
+                $_SESSION["log"]="0";
+                @session_destroy();
+            }
+            @session_write_close();
+        } else {
+            $this->rooturl=@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl;
+            $this->fileGen=@$_POST["fileGen"]?$_POST["fileGen"]:$this->fileGen;
+            $this->savefile=@$_POST["savefile"];
+            $this->stop=@$_POST["stop"];
+            $this->button=@$_POST["button"];
+            if ($this->button=="logout") {
+                @session_destroy();
+                $this->logged=0;
+                @session_write_close();
+            }
+
+
+        }
+    }
+
+    function init() {
+        if (php_sapi_name() == "cli") {
+            $this->initSapi();
+        } else {
+           $this->initWeb();
+        }
+    }
+
+    function genautoload($file,$namespaces,$namespacesAlt) {
+        if ($this->savefile) {
+            try {
+                $fp = @fopen($file, "w");
+                if (!$fp) throw new Exception("Error");
+            } catch (Exception $e) {
+                $this->addLog("ERROR: Unable to save file $file ".$php_errormsg);
+                return false;
+            }
         }
         $template=<<<'EOD'
 <?php
 /**
  * This class is used for autocomplete.
- * Class _AutoInclude
- * @noautoload
+ * Class _AutoLoad
+ * @noautoload it avoids to index this class
  * @generated by AutoLoadOne {{version}} generated {{date}}
- * @copyright Copyright Jorge Castro C - MIT License.
+ * @copyright Copyright Jorge Castro C - MIT License. https://github.com/EFTEC/AutoLoadOne
  */
-class _AutoInclude
+class _AutoLoad
 {
     var $debug=false;
-    private $_arrautoincludeCustom = array(
+    private $_arrautoloadCustom = array(
 {{custom}}
     );
-    private $_arrautoinclude = array(
+    private $_arrautoload = array(
 {{include}}
     );
     /**
-     * _AutoInclude constructor.
+     * _AutoLoad constructor.
      * @param bool $debug
      */
     public function __construct(bool $debug=false)
@@ -123,13 +197,13 @@ class _AutoInclude
         $ns=($ns==".")?"":$ns;        
         $cls = basename($class_name);
         // special cases
-        if (isset($this->_arrautoincludeCustom[$class_name])) {
-            $this->loadIfExists($this->_arrautoincludeCustom[$class_name] );
+        if (isset($this->_arrautoloadCustom[$class_name])) {
+            $this->loadIfExists($this->_arrautoloadCustom[$class_name] );
             return;
         }
         // normal (folder) cases
-        if (isset($this->_arrautoinclude[$ns])) {
-            $this->loadIfExists($this->_arrautoinclude[$ns] . "\\" . $cls . ".php");
+        if (isset($this->_arrautoload[$ns])) {
+            $this->loadIfExists($this->_arrautoload[$ns] . "\\" . $cls . ".php");
             return;
         }
     }
@@ -150,16 +224,16 @@ class _AutoInclude
             }
         }
     }
-} // end of the class _AutoInclude
+} // end of the class _AutoLoad
 if (defined('_AUTOLOADONEDEBUG')) {
-    $_autoInclude=new _AutoInclude(_AUTOLOADONEDEBUG);
+    $_autoLoad=new _AutoLoad(_AUTOLOADONEDEBUG);
 } else {
-    $_autoInclude=new _AutoInclude(false);
+    $_autoLoad=new _AutoLoad(false);
 }
 spl_autoload_register(function ($class_name)
 {
-    global $_autoInclude;
-    $_autoInclude->auto($class_name);
+    global $_autoLoad;
+    $_autoLoad->auto($class_name);
 });
 EOD;
         $custom="";
@@ -179,12 +253,13 @@ EOD;
 
         $template=str_replace("{{custom}}",$custom,$template);
         $template=str_replace("{{include}}",$include,$template);
-        $template=str_replace("{{version}}",AUTOLOADONEVERSION,$template);
+        $template=str_replace("{{version}}",$this::VERSION,$template);
         $template=str_replace("{{date}}", date("Y/m/d h:i:s"),$template);
 
-        if ($savefile) {
+        if ($this->savefile) {
             fwrite($fp, $template);
             fclose($fp);
+            $this->addLog("File $file generated");
         }
         return $template;
 
@@ -270,44 +345,27 @@ EOD;
     }
     function genPath($path) {
         $path=str_replace("\\","/",$path);
-        //$path.="/test/folder";
-        global $baseGen;
-        if (strpos($path,$baseGen)==0) {
+        if (strpos($path,$this->baseGen)==0) {
             $min1=strripos($path,"/");
-            $min2=strripos($baseGen,"/");
-            //$min=min(strlen($path),strlen($baseGen));
+            $min2=strripos($this->baseGen,"/");
+            //$min=min(strlen($path),strlen($this->baseGen));
             $min=min($min1,$min2);
             $baseCommon=$min;
             for($i=0;$i<$min;$i++) {
-                if (substr($path,0,$i)!=substr($baseGen,0,$i)) {
+                if (substr($path,0,$i)!=substr($this->baseGen,0,$i)) {
                     $baseCommon=$i-2;
 
                     break;
                 }
             }
-            //$sub=str_replace($path,"",$baseGen);
-
             // cuanto hay que retroceder
-
-            $c=substr_count(substr($baseGen,$baseCommon),"/");
+            $c=substr_count(substr($this->baseGen,$baseCommon),"/");
             $r=str_repeat("/..",$c);
             // hay que avanzar
             $r2=substr($path,$baseCommon);
-            /*
-            echo "common:".substr($baseGen,0,$baseCommon)."<br>";
-            echo $path."<br>";
-            echo $baseGen."<br>";
-            echo $r.$r2."<br>";
-            */
             return $r.$r2;
-            //die(1);
         } else {
-            /*
-            echo $path."<br>";
-            echo $baseGen."<br>";
-            die(1);
-            */
-            $r=substr($path, strlen($baseGen));
+            $r=substr($path, strlen($this->baseGen));
         }
         return $r;
     }
@@ -318,127 +376,115 @@ EOD;
      */
     function dirNameLinux($fullUrl) {
         $dir = dirname($fullUrl);
-        $dir=str_replace("\\","/",$dir);
+        $dir=str_replace("\\","/",$dir); // replace windows path for linux path.
+        //$dir=str_replace("/",DIRECTORY_SEPARATOR,$dir); // replace windows path for linux path.
+        $dir = rtrim($dir, "/"); // remove trailing /
         return $dir;
     }
 
+
     function addLog($txt) {
-        global $log;
         if (php_sapi_name() == "cli") {
-            echo $txt . "\n";
+            echo "\t".$txt . "\n";
         } else {
-            $log .= $txt . "\n";
+            $this->log .= $txt . "\n";
         }
     }
 
+    function process() {
+        if ($this->rooturl) {
+            $this->baseGen=$this->dirNameLinux($this->fileGen."/autoload.php");
+            $files = $this->listFolderFiles($this->rooturl);
+            $ns = array();
+            $nsAlt = array();
+            $this->excludeNSArr = str_replace("\n", "", $this->excludeNS);
+            $this->excludeNSArr = str_replace("\r", "", $this->excludeNSArr);
+            $this->excludeNSArr = str_replace(" ", "", $this->excludeNSArr);
+            $this->excludeNSArr = explode(",", $this->excludeNSArr);
 
-}
+            $this->excludePathArr = str_replace("\n", "", $this->excludePath);
+            $this->excludePathArr = str_replace("\r", "", $this->excludePathArr);
+            $this->excludePathArr = str_replace(" ", "", $this->excludePathArr);
+            $this->excludePathArr = explode(",", $this->excludePathArr);
 
-$auto=new AutoLoadOne();
-
-
-
-
-
-
-
-if ($rooturl) {
-    $baseGen=$auto->dirNameLinux($fileGen);
-    $files = $auto->listFolderFiles($rooturl);
-
-
-    $ns = array();
-    $nsAlt = array();
-
-    $excludeNSArr = str_replace("\n", "", $excludeNS);
-    $excludeNSArr = str_replace("\r", "", $excludeNSArr);
-    $excludeNSArr = str_replace(" ", "", $excludeNSArr);
-    $excludeNSArr = explode(",", $excludeNSArr);
-
-    $excludePathArr = str_replace("\n", "", $excludePath);
-    $excludePathArr = str_replace("\r", "", $excludePathArr);
-    $excludePathArr = str_replace(" ", "", $excludePathArr);
-    $excludePathArr = explode(",", $excludePathArr);
-
-    $log = "";
-    $result = "";
-    if ($button) {
-        foreach ($files as $f) {
-            $pArr = $auto->parsePHPFile($f);
-            $dir = $auto->dirNameLinux($f);
-            $dir = $auto->genPath($dir);
-            $full = $auto->genPath($f);
-            $urlFull = $auto->dirNameLinux($full);
-            $basefile = basename($f);
-            //var_dump($f);
-            //var_dump($dir);
-            //die(1);
-
-            foreach ($pArr as $p) {
+            $this->log = "";
+            $this->result = "";
+            if ($this->button) {
+                foreach ($files as $f) {
+                    $pArr = $this->parsePHPFile($f);
+                    $dir = $this->dirNameLinux($f);
+                    $dir = $this->genPath($dir);
+                    $full = $this->genPath($f);
+                    $urlFull = $this->dirNameLinux($full);
+                    $basefile = basename($f);
+                    foreach ($pArr as $p) {
 
 
-                $nsp = $p['namespace'];
-                $cs = $p['classname'];
+                        $nsp = $p['namespace'];
+                        $cs = $p['classname'];
 
-                $altUrl = ($nsp != "") ? $nsp . '\\' . $cs : $cs;
+                        $altUrl = ($nsp != "") ? $nsp . '\\' . $cs : $cs;
 
-                if ($nsp != "" || $cs != "") {
-                    if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . ".php") {
-                        // namespace doesn't exist and the class is equals to the name
-                        // adding as a folder
+                        if ($nsp != "" || $cs != "") {
+                            if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . ".php") {
+                                // namespace doesn't exist and the class is equals to the name
+                                // adding as a folder
 
-                        if ((!in_array($nsp, $excludeNSArr) || $nsp=="") && !in_array($dir, $excludePathArr)) {
-                            if ($nsp=="") {
-                                $auto->addLog("Adding Full (empty namespace): $altUrl=$full");
-                                $nsAlt[$altUrl] = $full;
+                                if ((!in_array($nsp, $this->excludeNSArr) || $nsp=="") && !in_array($dir, $this->excludePathArr)) {
+                                    if ($nsp=="") {
+                                        $this->addLog("Adding Full (empty namespace): $altUrl=$full");
+                                        $nsAlt[$altUrl] = $full;
+                                    } else {
+                                        $ns[$nsp] = $dir;
+                                        $this->addLog("Adding Folder: $nsp=$dir");
+                                    }
+
+                                }
                             } else {
-                                $ns[$nsp] = $dir;
-                                $auto->addLog("Adding Folder: $nsp=$dir");
-                            }
-
-                        }
-                    } else {
-                        // custom namespace 1-1
-                        // a) if filename has different name with the class
-                        // b) if namespace is already defined for a different folder.
-                        // c) multiple namespaces
-                        if (isset($nsAlt[$altUrl])) {
-                            $auto->addLog("Error Conflict:Class on $altUrl already defined.");
-                            if ($stop) {
-                                die(1);
-                            }
-                        } else {
-                            if ((!in_array($altUrl, $excludeNSArr) || $nsp=="") && !in_array($urlFull, $excludePathArr)) {
-                                $auto->addLog("Adding Full: $altUrl=$full");
-                                $nsAlt[$altUrl] = $full;
+                                // custom namespace 1-1
+                                // a) if filename has different name with the class
+                                // b) if namespace is already defined for a different folder.
+                                // c) multiple namespaces
+                                if (isset($nsAlt[$altUrl])) {
+                                    $this->addLog("Error Conflict:Class on $altUrl already defined.");
+                                    if ($this->stop) {
+                                        die(1);
+                                    }
+                                } else {
+                                    if ((!in_array($altUrl, $this->excludeNSArr) || $nsp=="") && !in_array($urlFull, $this->excludePathArr)) {
+                                        $this->addLog("Adding Full: $altUrl=$full");
+                                        $nsAlt[$altUrl] = $full;
+                                    }
+                                }
                             }
                         }
                     }
+                    if (count($pArr)==0) {
+                        $this->addLog("Ignoring $full");
+                    }
                 }
+                $this->result = $this->genautoload($this->dirNameLinux($this->fileGen)."/autoload.php", $ns, $nsAlt);
             }
-            if (count($pArr)==0) {
-                $auto->addLog("Ignoring $full");
-            }
+
+
+        } else {
+            $this->addLog("No folder specified");
         }
-        $result = $auto->genautoinclude($fileGen, $ns, $nsAlt, $savefile);
+
+
     }
+    function render() {
 
 
-}
+        if (php_sapi_name() == "cli") {
+            $t2=microtime(true);
+            echo "\n".(round(($t2-$this->t1)*1000)/1000)."ms. Finished\n";
 
 
+        } else {
 
-
-
-if (php_sapi_name() == "cli") {
-    $t2=microtime(true);
-    echo "\n".(round(($t2-$t1)*1000)/1000)."ms. Finished\n";
-
-
-} else {
-
-if (!$logged) {
-    $web=<<<'LOGS'
+            if (!$this->logged) {
+                $web=<<<'LOGS'
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -493,12 +539,12 @@ if (!$logged) {
 
 </html>
 LOGS;
-    echo $web;
-}   else {
+                echo $web;
+            }   else {
 
 
 
-    $web = <<<'TEM1'
+                $web = <<<'TEM1'
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -516,13 +562,13 @@ LOGS;
           <div class="col-md-12">
             <div class="panel panel-primary">
               <div class="panel-heading">
-                <h3 class="panel-title"><a href="https://github.com/EFTEC/AutoLoadOne">AutoIncludeOne</a> Generator {{version}}.</h3>
+                <h3 class="panel-title">AutoLoadOneGenerator {{version}}.<div  class='pull-right' ><a style="color:white;" href="https://github.com/EFTEC/AutoLoadOne">Help Page</a></div></h3>
               </div>             
               <div class="panel-body">
                 <form class="form-horizontal" role="form" method="post">
                   <div class="form-group">
                     <div class="col-sm-2">
-                      <label class="control-label">Root Folder</label>
+                      <label class="control-label">Root Folder <span class="text-danger">(Req)</span> </label>
                     </div>
                     <div class="col-sm-10">
                       <input type="text" class="form-control" placeholder="ex. \htdoc\web  or c:\htdoc\web"
@@ -532,14 +578,14 @@ LOGS;
                   </div>
                   <div class="form-group">
                     <div class="col-sm-2">
-                      <label class="control-label">Generated File
+                      <label class="control-label">Generated File <span class="text-danger">(Req)</span>
                         <br>
                       </label>
                     </div>
                     <div class="col-sm-10">
-                      <input type="text" class="form-control" placeholder="ex. /etc/httpd/web/autoinclude.php or c:\apache\htdoc\autoinclude.php"
+                      <input type="text" class="form-control" placeholder="ex. /etc/httpd/web or c:\apache\htdoc"
                       name="fileGen" value="{{fileGen}}">
-                      <em>Full path (local file) of the autoinclude file that will be generated.<br>
+                      <em>Full path (local file) where the autoload.php will be generated.<br>
                       Note: This path is also used to determine the relativity of the includes</em>
                     </div>
                   </div>
@@ -620,26 +666,53 @@ LOGS;
 TEM1;
 
 
-    $web=str_replace("{{rooturl}}",$rooturl,$web);
-    $web=str_replace("{{fileGen}}",$fileGen,$web);
+                $web=str_replace("{{rooturl}}",$this->rooturl,$web);
+                $web=str_replace("{{fileGen}}",$this->fileGen,$web);
 
 
 
-    $web=str_replace("{{excludeNS}}",$excludeNS,$web);
-    $web=str_replace("{{excludePath}}",$excludePath,$web);
-    $web=str_replace("{{savefile}}",($savefile)?"checked":"",$web);
-    $web=str_replace("{{stop}}",($stop)?"checked":"",$web);
+                $web=str_replace("{{excludeNS}}",$this->excludeNS,$web);
+                $web=str_replace("{{excludePath}}",$this->excludePath,$web);
+                $web=str_replace("{{savefile}}",($this->savefile)?"checked":"",$web);
+                $web=str_replace("{{stop}}",($this->stop)?"checked":"",$web);
 
-    $web=str_replace("{{log}}",$log,$web);
-    $web=str_replace("{{version}}",AUTOLOADONEVERSION,$web);
-    $web=str_replace("{{result}}",$result,$web);
+                $web=str_replace("{{log}}",$this->log,$web);
+                $web=str_replace("{{version}}",$this::VERSION,$web);
+                $web=str_replace("{{result}}",$this->result,$web);
 
-    $t2=microtime(true);
-    $ms=(round(($t2-$t1)*1000)/1000)."ms.";
+                $t2=microtime(true);
+                $ms=(round(($t2-$this->t1)*1000)/1000)."ms.";
 
-    $web=str_replace("{{ms}}",$ms,$web);
-    echo $web;
-}
-}
+                $web=str_replace("{{ms}}",$ms,$web);
+                echo $web;
+            }
+        }
+
+    }
+
+} // end class AutoLoadOne
+
+
+
+
+
+$auto=new AutoLoadOne();
+$auto->init();
+$auto->process();
+$auto->render();
+
+
+// @noautoload
+/**
+ * @noautoload
+ */
+
+
+
+
+
+
+
+
 
 
