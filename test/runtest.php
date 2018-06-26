@@ -4,6 +4,12 @@ namespace dummy;
 use ClassWithoutNameSpace;
 
 define("_AUTOLOADONEDEBUG",true);
+
+// both includes works:
+// include "autoload.php";
+// or
+// include "folder/subfolder/autoload.php";
+
 include "autoload.php";
 
 
