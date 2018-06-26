@@ -66,6 +66,19 @@ Enter your user and password.  If _AUTOLOADENTER is true then you are logged aut
 
 In the shell, browser to the folder where you want to generate the code and run the next command
 
+Commands available :  
+
+* current (scan and generates files from the current folder)  
+* folder (folder to scan)  
+* filegen (folder where autoload.php will be generate)  
+* save yes/no (save the file to generate).This option is required.
+* excludens (namespace excluded)  
+* excludepath (path excluded)  
+
+
+> Example: php autoloadone.php -folder folder\scan -filegen folder\whereautoload\ -save yes
+
+
 ```
 php folder/located/autoloadone.php -current
 ```
@@ -111,18 +124,6 @@ _More is better._
 > I did a synthetic benchmark by loading different classes and reading the performance of it. Since my machine has a SSD disk then, the impact of the disk is minimum in comparison with a mechanical hard disk.
 > This chart compares the performance against INCLUDE.
 
-## Version
-2018-06-24 First version
-
-## Todo
-
-* CLI (more commands)
-* Clean the code.
-* Convert to a single class.
-* External folder/library (relative or absolute path)
-* The generation fails if a php file has an error.
-* Specify the extensions. By default it scans only .php files.
-
 ## Security
 
 > While the program has a build-in-security measure, however I suggest to protect adding new layers of security such as locating the AutoLoadOne.php file outside of the public/web folder.
@@ -149,3 +150,16 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 
+
+## Version
+1.1 2018-06-26 Some fixes.
+1.0 2018-06-24 First version
+
+## Todo
+
+* CLI (more commands)
+* Clean the code.
+* Convert to a single class.
+* External folder/library (relative or absolute path)
+* The generation fails if a php file has an error.
+* Specify the extensions. By default it scans only .php files.

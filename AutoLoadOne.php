@@ -82,6 +82,7 @@ class AutoLoadOne {
 
         if (count($argv)<2) {
             // help
+            echo "Help:\n";
             echo "-current (scan and generates files from the current folder)\n";
             echo "-folder (folder to scan)\n";
             echo "-filegen (folder where autoload.php will be generate)\n";
