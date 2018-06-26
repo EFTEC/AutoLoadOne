@@ -135,7 +135,7 @@ In the /test folder you could find some example to try.
 // @noautoload
 ?>
 ```
-> If you find the error: Parse error: syntax error, ________________ in on line 000. Then some of the php files scanned have some syntax error. The solution is to fix the problem or to exclude the whole folder.  
+> If you find the error: Parse error: syntax error, <message> in on line 000. Then some of the php files scanned have some syntax error. The solution is to fix the problem or to exclude the whole folder.  
 > How to find the file with error? You could run the page with the debug flag: autoloadone.php?debug=1  
 
 ## Benchmark
