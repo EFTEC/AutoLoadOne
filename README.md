@@ -39,8 +39,8 @@ Or you could run AutoLoadOne.php again and replace the old autoload.php
 * Support CLI
 
 ## AutoLoadOne extended features:
-* [x] One or Many classes per file.
-* [x] One or many namespaces per file.
+* :white_check_mark: One or Many classes per file.
+* :white_check_mark: One or many namespaces per file.
 * The file could contain optionally a namespace.
 * It only requires PHP
 * The folder structure and classes are validated once.
