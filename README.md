@@ -77,7 +77,8 @@ Enter your user and password.  If _AUTOLOADENTER is true then you are logged aut
 ![autoloadone login](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/login.jpg "Autoloadone logon")
 
 
-4) Select the folder to scan, then select the file to generate and finally press the button GENERATE.
+:four:  
+ Select the folder to scan, then select the file to generate and finally press the button GENERATE.
 
 ![autoloadone screen](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen.jpg "Autoloadone screen")
 
@@ -89,7 +90,8 @@ Enter your user and password.  If _AUTOLOADENTER is true then you are logged aut
 
 
 
-5) The result should looks this:
+:five:  
+ The result should looks this:
 
 ![autoloadone screen2](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen2.jpg "Autoloadone screen2")
 
