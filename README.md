@@ -39,7 +39,7 @@ Or you could run AutoLoadOne.php again and replace the old autoload.php
 :black_square_button: It requires composer.  
 :black_square_button: It validates the file each file the class is loaded per user.  
 :black_square_button: The structure of the folders should be pre-defined.  
-:black_square_button: Support CLI  
+:white_check_mark: Support CLI  
 
 ## AutoLoadOne extended features:
 :white_check_mark: One or Many classes per file.  
