@@ -118,7 +118,7 @@ php folder/located/autoloadone.php -current
 
 
 
-## Usage (generate class)
+## Usage of the generated file autoload.php
 
 :one:  
 include the generated file by the previous step. ex: autoload.php
@@ -126,14 +126,14 @@ include the generated file by the previous step. ex: autoload.php
 ```php
 <?php
 define("_AUTOLOADONEDEBUG",true); // this line is optional.
-include "autoload.php";
+include "autoload.php"; // it could be an absolute or relative path.
 ?>
 ```
 and that's it!.
 
 In the /test folder you could find some example to try.
 
-> Note:Now, you could delete autoloadone.php
+> Note:Finally, you could delete the file autoloadone.php if you wish for.
 
 ## Note
 
@@ -184,8 +184,6 @@ Deny from all
 ```
 
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
-
-
 
 ## Version
 * 1.2 2018-07-01 Lots of changes. Modified exclusion.  Title and icons for the web ui.  It also allows to disable the web.
