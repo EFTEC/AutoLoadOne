@@ -138,6 +138,9 @@ class AutoLoadOne {
             $this->debugMode=isset($_GET['debug'])?true:false;
             $this->rooturl=@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl;
             $this->fileGen=@$_POST["fileGen"]?$_POST["fileGen"]:$this->fileGen;
+            $this->excludeNS=@$_POST["excludeNS"]?$_POST["excludeNS"]:$this->excludeNS;
+            $this->excludePath=@$_POST["excludePath"]?$_POST["excludePath"]:$this->excludePath;
+
             $this->savefile=@$_POST["savefile"];
             $this->stop=@$_POST["stop"];
             $this->button=@$_POST["button"];
