@@ -6,20 +6,20 @@ use Exception;
 define("_AUTOLOADUSER","autoloadone");
 define("_AUTOLOADPASSWORD","autoloadone");
 define("_AUTOLOADENTER",true); // if you want to auto login (skip user and password) then set to true
-
+define("_AUTOLOADONLYCLI",false); // if you want to use only cli. If true, it disabled the web interface.
 //*************************************************************
 ini_set('max_execution_time', 300); // Limit of 5 minutes.
 /**
  * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
- * @version 1.1
+ * @version 1.2 2018-07-01
  * @noautoload
  * @package eftec\AutoLoadOne
  *
  */
 class AutoLoadOne {
 
-    const VERSION="1.1";
+    const VERSION="1.2";
 
     var $rooturl=__DIR__;
     var $fileGen="";
@@ -159,6 +159,7 @@ class AutoLoadOne {
         if (php_sapi_name() == "cli") {
             $this->initSapi();
         } else {
+            if (_AUTOLOADONLYCLI) die(1);
            $this->initWeb();
         }
     }
@@ -531,8 +532,9 @@ EOD;
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>AutoLoadOneGenerator Login Screen</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" href="https://cdn.sstatic.net/Sites/stackoverflow/img/favicon.ico?v=4f32ecc8f43d">
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/EFTEC/AutoLoadOne/master/doc/favicon.ico">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
 
   </head>
@@ -593,6 +595,8 @@ LOGS;
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>AutoLoadOneGenerator {{version}}</title>
+    
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/EFTEC/AutoLoadOne/master/doc/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1">    
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />    
 </head>

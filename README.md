@@ -188,14 +188,15 @@ Deny from all
 
 
 ## Version
+* 1.2 2018-07-01 Lots of changes with the exclusions.  Title and icons for the web ui.  It also allows to disable the web.
 * 1.1 2018-06-26 Some fixes. 
 * 1.0 2018-06-24 First version  
 
 ## Todo
-
+* Save configuration
 * CLI (more commands)
 * Clean the code.
-* Convert to a single class.
+* ---Convert to a single class.---
 * External folder/library (relative or absolute path)
 * The generation fails if a php file has an error.
 * Specify the extensions. By default it scans only .php files.
