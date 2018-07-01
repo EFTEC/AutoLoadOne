@@ -30,6 +30,7 @@ class AutoLoadOne {
     var $excludePath="";
     var $log="";
     var $result="";
+    var $cli="";
     var $logged=false;
     var $current="";
     var $t1=0;
@@ -417,17 +418,21 @@ EOD;
             $this->excludeNSArr = explode(",", $this->excludeNSArr);
 
             $this->excludePathArr = str_replace("\n", "", $this->excludePath);
+            $this->excludePathArr = str_replace("\\", "/", $this->excludePath);
             $this->excludePathArr = str_replace("\r", "", $this->excludePathArr);
             $this->excludePathArr = str_replace(" ", "", $this->excludePathArr);
             $this->excludePathArr = explode(",", $this->excludePathArr);
+            foreach($this->excludePathArr as &$item) {
+                $item=trim($item);
+            }
 
             $this->log = "";
             $this->result = "";
             if ($this->button) {
                 foreach ($files as $f) {
                     $pArr = $this->parsePHPFile($f);
-                    $dir = $this->dirNameLinux($f);
-                    $dir = $this->genPath($dir);
+                    $dirOriginal = $this->dirNameLinux($f);
+                    $dir = $this->genPath($dirOriginal);
                     $full = $this->genPath($f);
                     $urlFull = $this->dirNameLinux($full);
                     $basefile = basename($f);
@@ -448,8 +453,21 @@ EOD;
                             if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . ".php") {
                                 // namespace doesn't exist and the class is equals to the name
                                 // adding as a folder
+                                $exclude=false;
+                                if (in_array($nsp, $this->excludeNSArr) && $nsp!="") {
+                                    $this->addLog("Ignoring namespace (exclusion list): $altUrl=$full");
+                                    $exclude=true;
+                                }
+                                if (in_array($dir, $this->excludePathArr)) {
+                                    $this->addLog("Ignoring relative path (exclusion list): $altUrl=$dir");
+                                    $exclude=true;
+                                }
+                                if (in_array($dirOriginal, $this->excludePathArr)) {
+                                    $this->addLog("Ignoring full path (exclusion list): $altUrl=$dirOriginal");
+                                    $exclude=true;
+                                }
 
-                                if ((!in_array($nsp, $this->excludeNSArr) || $nsp=="") && !in_array($dir, $this->excludePathArr)) {
+                                if (!$exclude) {
                                     if ($nsp=="") {
                                         $this->addLog("Adding Full (empty namespace): $altUrl=$full");
                                         $nsAlt[$altUrl] = $full;
@@ -514,6 +532,7 @@ EOD;
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="https://cdn.sstatic.net/Sites/stackoverflow/img/favicon.ico?v=4f32ecc8f43d">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
 
   </head>
@@ -573,7 +592,8 @@ LOGS;
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AutoLoadOneGenerator {{version}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">    
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />    
 </head>
       
@@ -627,7 +647,7 @@ LOGS;
                       </label>
                     </div>
                     <div class="col-sm-10">
-                      <textarea class="form-control" name="excludeNS">{{excludeNS}}</textarea>
+                      <textarea class="form-control" rows="5" name="excludeNS">{{excludeNS}}</textarea>
                       <em>Namespaces without trailing "/" separated by comma. Example
                       /mynamespace</em></div>
                   </div>
@@ -636,7 +656,7 @@ LOGS;
                       <label class="control-label">Excluded Path</label>
                     </div>
                     <div class="col-sm-10">
-                      <textarea class="form-control" name="excludePath">{{excludePath}}</textarea>
+                      <textarea class="form-control" rows="5" name="excludePath">{{excludePath}}</textarea>
                       <em>Relative path without trailing "/" separated by comma. Example
                       vendor/pchart/class</em></div>
                   </div>
@@ -650,22 +670,30 @@ LOGS;
                       </div>
                     </div>
                   </div>
-                  <div class="form-group" draggable="true">
+                  <div class="form-group" >
                     <div class="col-sm-2">
                       <label class="control-label">Log</label>
                     </div>
                     <div class="col-sm-10">
-                      <textarea class="form-control" readonly rows="10">{{log}}</textarea>
+                      <textarea class="form-control" readonly  rows="5">{{log}}</textarea>
                     </div>
                   </div>                  
-                  <div class="form-group" draggable="true">
+                  <div class="form-group" >
                     <div class="col-sm-2">
                       <label class="control-label">Result</label>
                     </div>
                     <div class="col-sm-10">
-                      <textarea class="form-control" readonly rows="10">{{result}}</textarea>
+                      <textarea  class="form-control" readonly rows="14" >{{result}}</textarea>
                     </div>
                   </div>
+                  <div class="form-group" >
+                    <div class="col-sm-2">
+                      <label class="control-label">Cli</label>
+                    </div>
+                    <div class="col-sm-10">
+                      <textarea  class="form-control" readonly rows="3" >{{cli}}</textarea>
+                    </div>
+                  </div>                  
                   <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10">
                       <button type="submit" name="button" value="1" class="btn btn-default">Generate</button>
@@ -673,6 +701,7 @@ LOGS;
                       <button type="submit" name="button" value="logout" class="btn btn-default">Logout</button>
                     </div>
                   </div>
+                  
                 </form>
               </div>
               <div class="panel-footer">
@@ -702,6 +731,19 @@ TEM1;
                 $web=str_replace("{{log}}",$this->log,$web);
                 $web=str_replace("{{version}}",$this::VERSION,$web);
                 $web=str_replace("{{result}}",$this->result,$web);
+
+                $this->cli="php autoloadone.php -folder \"{$this->rooturl}\" -filegen \"{$this->fileGen}\" -save ";
+
+                $tmp=str_replace("\n","",$this->excludeNS);
+                $tmp=str_replace("\r","",$tmp);
+
+                $this->cli.="-excludens \"{$tmp}\" ";
+                $tmp=str_replace("\n","",$this->excludePath);
+                $tmp=str_replace("\r","",$tmp);
+                $this->cli.="-excludepath \"{$tmp}\"";
+
+
+                $web=str_replace("{{cli}}",$this->cli,$web);
 
                 $t2=microtime(true);
                 $ms=(round(($t2-$this->t1)*1000)/1000)." sec.";
