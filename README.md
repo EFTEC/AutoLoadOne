@@ -188,7 +188,7 @@ Deny from all
 
 
 ## Version
-* 1.2 2018-07-01 Lots of changes with the exclusions.  Title and icons for the web ui.  It also allows to disable the web.
+* 1.2 2018-07-01 Lots of changes. Modified exclusion.  Title and icons for the web ui.  It also allows to disable the web.
 * 1.1 2018-06-26 Some fixes. 
 * 1.0 2018-06-24 First version  
 
