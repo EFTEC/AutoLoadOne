@@ -196,7 +196,7 @@ Deny from all
 * Save configuration
 * CLI (more commands)
 * Clean the code.
-* ---Convert to a single class.---
+* ~~Convert to a single class.~~
 * External folder/library (relative or absolute path)
 * The generation fails if a php file has an error.
 * Specify the extensions. By default it scans only .php files.
