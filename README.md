@@ -186,6 +186,7 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+* 1.3 2018-07-05 Now it works with interface and it fixes a problem with some specific file.  It also fixes a problem with linux vs windows folder.
 * 1.2 2018-07-01 Lots of changes. Modified exclusion.  Title and icons for the web ui.  It also allows to disable the web.
 * 1.1 2018-06-26 Some fixes. 
 * 1.0 2018-06-24 First version  

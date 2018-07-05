@@ -12,14 +12,14 @@ ini_set('max_execution_time', 300); // Limit of 5 minutes.
 /**
  * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
- * @version 1.2 2018-07-01
+ * @version 1.3 2018-07-05
  * @noautoload
  * @package eftec\AutoLoadOne
  *
  */
 class AutoLoadOne {
 
-    const VERSION="1.2";
+    const VERSION="1.3";
 
     var $rooturl=__DIR__;
     var $fileGen="";
@@ -51,8 +51,8 @@ class AutoLoadOne {
         $this->t1=microtime(true);
     }
     function getAllParametersCli() {
-        $this->rooturl=$this->getParameterCli("folder");
-        $this->fileGen=$this->getParameterCli("filegen");
+        $this->rooturl=$this->fixSeparator($this->getParameterCli("folder"));
+        $this->fileGen=$this->fixSeparator($this->getParameterCli("filegen"));
         $this->savefile=$this->getParameterCli("save");
         $this->stop=$this->getParameterCli("stop");
         $this->current=$this->getParameterCli("current",true);
@@ -88,7 +88,11 @@ class AutoLoadOne {
 
         if (count($argv)<2) {
             // help
-            echo "Help:\n";
+            echo "\033[31m \033Help:\n";
+            echo "\033[31mred\033[37m\r\n";
+            echo "\033[32mgreen\033[37m\r\n";
+            echo "\033[41;30mblack on red\033[40;37m\r\n";
+            echo 'echo ^<ESC^>[101m [101mRed[0m';
             echo "-current (scan and generates files from the current folder)\n";
             echo "-folder (folder to scan)\n";
             echo "-filegen (folder where autoload.php will be generate)\n";
@@ -216,7 +220,7 @@ class _AutoLoad
         }
         // normal (folder) cases
         if (isset($this->_arrautoload[$ns])) {
-            $this->loadIfExists($this->_arrautoload[$ns] . "\\" . $cls . ".php");
+            $this->loadIfExists($this->_arrautoload[$ns] . "/" . $cls . ".php");
             return;
         }
     }
@@ -227,9 +231,9 @@ class _AutoLoad
      */
     public function loadIfExists($filename)
     {
-        if((@include __DIR__."\\".$filename) === false) {
+        if((@include __DIR__."/".$filename) === false) {
             if ($this->debug) {
-                throw  new Exception("AutoLoadOne Error: Loading file [".__DIR__."\\".$filename."] for class [".basename($filename)."]");
+                throw  new Exception("AutoLoadOne Error: Loading file [".__DIR__."/".$filename."] for class [".basename($filename)."]");
             } else {
                 throw  new Exception("AutoLoadOne Error: No file found.");
             }
@@ -344,7 +348,10 @@ EOD;
                 }
                 $nameSpace=$ns;
             }
-            if (is_array($token) && $token[0]==T_CLASS) {
+            // A class is defined by a T_CLASS + an space + name of the class.
+            if (is_array($token) && ($token[0]==T_CLASS || $token[0]==T_INTERFACE)
+                && is_array($tokens[$p+1]) && $tokens[$p+1][0]==T_WHITESPACE   ) {
+
                 // encontramos una clase
                 $min=min($p+30,count($tokens)-1);
                 for($i=$p+2;$i<$min;$i++) {
@@ -360,7 +367,7 @@ EOD;
         return $r;
     }
     function genPath($path) {
-        $path=str_replace("\\","/",$path);
+        $path=$this->fixSeparator($path);
         if (strpos($path,$this->baseGen)==0) {
             $min1=strripos($path,"/");
             $min2=strripos($this->baseGen,"/");
@@ -385,6 +392,9 @@ EOD;
         }
         return $r;
     }
+    function fixSeparator($fullUrl) {
+        return str_replace("\\","/",$fullUrl); // replace windows path for linux path.
+    }
     /**
      * returns dir name linux way
      * @param $fullUrl
@@ -392,7 +402,7 @@ EOD;
      */
     function dirNameLinux($fullUrl) {
         $dir = dirname($fullUrl);
-        $dir=str_replace("\\","/",$dir); // replace windows path for linux path.
+        $this->fixSeparator($dir);
         //$dir=str_replace("/",DIRECTORY_SEPARATOR,$dir); // replace windows path for linux path.
         $dir = rtrim($dir, "/"); // remove trailing /
         return $dir;
@@ -408,6 +418,8 @@ EOD;
     }
 
     function process() {
+        $this->rooturl=$this->fixSeparator($this->rooturl);
+        $this->fileGen=$this->fixSeparator($this->fileGen);
         if ($this->rooturl) {
             $this->baseGen=$this->dirNameLinux($this->fileGen."/autoload.php");
             $files = $this->listFolderFiles($this->rooturl);
@@ -419,7 +431,7 @@ EOD;
             $this->excludeNSArr = explode(",", $this->excludeNSArr);
 
             $this->excludePathArr = str_replace("\n", "", $this->excludePath);
-            $this->excludePathArr = str_replace("\\", "/", $this->excludePath);
+            $this->excludePathArr = $this->fixSeparator( $this->excludePath);
             $this->excludePathArr = str_replace("\r", "", $this->excludePathArr);
             $this->excludePathArr = str_replace(" ", "", $this->excludePathArr);
             $this->excludePathArr = explode(",", $this->excludePathArr);
@@ -431,6 +443,8 @@ EOD;
             $this->result = "";
             if ($this->button) {
                 foreach ($files as $f) {
+                    $f=$this->fixSeparator($f);
+
                     $pArr = $this->parsePHPFile($f);
                     $dirOriginal = $this->dirNameLinux($f);
                     $dir = $this->genPath($dirOriginal);
@@ -625,7 +639,7 @@ LOGS;
                   </div>
                   <div class="form-group">
                     <div class="col-sm-2">
-                      <label class="control-label">Generated File <span class="text-danger">(Req)</span>
+                      <label class="control-label">Result folder <span class="text-danger">(Req)</span>
                         <br>
                       </label>
                     </div>
