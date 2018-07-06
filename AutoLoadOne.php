@@ -349,7 +349,7 @@ EOD;
                 $nameSpace=$ns;
             }
             // A class is defined by a T_CLASS + an space + name of the class.
-            if (is_array($token) && ($token[0]==T_CLASS || $token[0]==T_INTERFACE)
+            if (is_array($token) && ($token[0]==T_CLASS || $token[0]==T_INTERFACE || $token[0]==T_TRAIT)
                 && is_array($tokens[$p+1]) && $tokens[$p+1][0]==T_WHITESPACE   ) {
 
                 // encontramos una clase
