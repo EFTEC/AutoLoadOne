@@ -370,21 +370,20 @@ EOD;
         $path=$this->fixSeparator($path);
         if (strpos($path,$this->baseGen)==0) {
             $min1=strripos($path,"/");
-            $min2=strripos($this->baseGen,"/");
+            $min2=strripos($this->baseGen."/","/");
             //$min=min(strlen($path),strlen($this->baseGen));
             $min=min($min1,$min2);
             $baseCommon=$min;
             for($i=0;$i<$min;$i++) {
                 if (substr($path,0,$i)!=substr($this->baseGen,0,$i)) {
                     $baseCommon=$i-2;
-
                     break;
                 }
             }
-            // cuanto hay que retroceder
+            // moving down the relative path (/../../)
             $c=substr_count(substr($this->baseGen,$baseCommon),"/");
             $r=str_repeat("/..",$c);
-            // hay que avanzar
+            // moving up the relative path
             $r2=substr($path,$baseCommon);
             return $r.$r2;
         } else {
@@ -462,7 +461,7 @@ EOD;
                             $this->statNumClass++;
                         }
 
-                        $altUrl = ($nsp != "") ? $nsp . '\\' . $cs : $cs;
+                        $altUrl = ($nsp != "") ? $nsp . '\\' . $cs : $cs; // namespace
 
                         if ($nsp != "" || $cs != "") {
                             if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . ".php") {
