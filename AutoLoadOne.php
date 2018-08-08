@@ -37,6 +37,7 @@ class AutoLoadOne {
     var $debugMode=false;
     var $statNumClass=0;
     var $statNumPHP=0;
+    var $statConflict=0;
     var $statNameSpaces=array();
     private $excludeNSArr;
     private $excludePathArr;
@@ -50,7 +51,7 @@ class AutoLoadOne {
         $this->fileGen=__DIR__;
         $this->t1=microtime(true);
     }
-    function getAllParametersCli() {
+    private function getAllParametersCli() {
         $this->rooturl=$this->fixSeparator($this->getParameterCli("folder"));
         $this->fileGen=$this->fixSeparator($this->getParameterCli("filegen"));
         $this->savefile=$this->getParameterCli("save");
@@ -66,7 +67,7 @@ class AutoLoadOne {
      * @param string $default is the defalut value is the parameter is set without value.
      * @return string
      */
-    function getParameterCli($key,$default='') {
+    private function getParameterCli($key,$default='') {
         global $argv;
         $p=array_search("-".$key,$argv);
         if ($p===false) return "";
@@ -79,7 +80,7 @@ class AutoLoadOne {
     }
 
 
-    function initSapi() {
+    private function initSapi() {
         global $argv;
         echo "------------------------------------------------------------------\n";
         echo " AutoLoadOne Generator ".$this::VERSION." (c) Jorge Castro\n";
@@ -122,7 +123,7 @@ class AutoLoadOne {
         echo "-excludepath ".$this->excludePath." (path excluded)\n";
         echo "------------------------------------------------------------------\n";
     }
-    function initWeb() {
+    private function initWeb() {
         @ob_start();
         // Not in cli-mode
         @session_start();
@@ -486,8 +487,14 @@ EOD;
                                         $this->addLog("Adding Full (empty namespace): $altUrl=$full");
                                         $nsAlt[$altUrl] = $full;
                                     } else {
-                                        $ns[$nsp] = $dir;
-                                        $this->addLog("Adding Folder: $nsp=$dir");
+                                        if (isset($ns[$nsp])) {
+                                            $this->addLog("Folder already used: $nsp=$dir");
+                                        } else {
+                                            $ns[$nsp] = $dir;
+                                            $this->addLog("Adding Folder: $nsp=$dir");
+                                        }
+
+
                                     }
 
                                 }
@@ -497,7 +504,8 @@ EOD;
                                 // b) if namespace is already defined for a different folder.
                                 // c) multiple namespaces
                                 if (isset($nsAlt[$altUrl])) {
-                                    $this->addLog("Error Conflict:Class on $altUrl already defined.");
+                                    $this->addLog("Error Conflict:Class with name $altUrl is already defined.");
+                                    $this->statConflict++;
                                     if ($this->stop) {
                                         die(1);
                                     }
@@ -521,6 +529,7 @@ EOD;
             $this->addLog("Stat number of classes: ".$this->statNumClass);
             $this->addLog("Stat number of namespaces: ".count($this->statNameSpaces));
             $this->addLog("Stat number of PHP Files: ".$this->statNumPHP);
+            $this->addLog("Stat number of conflict: ".$this->statConflict);
 
         } else {
             $this->addLog("No folder specified");
