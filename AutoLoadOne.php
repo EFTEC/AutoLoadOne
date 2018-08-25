@@ -3,25 +3,26 @@ namespace eftec\AutoLoadOne;
 //*************************************************************
 use Exception;
 
-define("_AUTOLOADUSER","autoloadone");
-define("_AUTOLOADPASSWORD","autoloadone");
-define("_AUTOLOADENTER",true); // if you want to auto login (skip user and password) then set to true
-define("_AUTOLOADONLYCLI",false); // if you want to use only cli. If true, it disabled the web interface.
+if(!defined("_AUTOLOAD_USER")) define("_AUTOLOAD_USER","autoloadone"); // user (web interface)
+if(!defined("_AUTOLOAD_PASSWORD")) define("_AUTOLOAD_PASSWORD","autoloadone"); // password (web interface)
+if(!defined("_AUTOLOAD_ENTER"))  define("_AUTOLOAD_ENTER",true); // if you want to auto login (skip user and password) then set to true
+if(!defined("_AUTOLOAD_SELFRUN"))  define("_AUTOLOAD_SELFRUN",false); // if you want to self run the class.
+if(!defined("_AUTOLOAD_ONLYCLI"))  define("_AUTOLOAD_ONLYCLI",true); // if you want to use only cli. If true, it disabled the web interface.
 //*************************************************************
-ini_set('max_execution_time', 300); // Limit of 5 minutes.
+@ini_set('max_execution_time', 300); // Limit of 5 minutes.
 /**
  * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
- * @version 1.3 2018-07-05
+ * @version 1.4 2018-08-24
  * @noautoload
  * @package eftec\AutoLoadOne
  *
  */
 class AutoLoadOne {
 
-    const VERSION="1.3";
+    const VERSION="1.4";
 
-    var $rooturl=__DIR__;
+    var $rooturl="";
     var $fileGen="";
     var $savefile=0;
     var $stop=0;
@@ -49,6 +50,7 @@ class AutoLoadOne {
     public function __construct()
     {
         $this->fileGen=__DIR__;
+        $this->rooturl=__DIR__;
         $this->t1=microtime(true);
     }
     private function getAllParametersCli() {
@@ -74,26 +76,30 @@ class AutoLoadOne {
         if ($default!=='') return $default;
         if (count($argv)>=$p+1) {
 
-            return $argv[$p + 1];
+            return $this->removeTrailSlash($argv[$p + 1]);
         }
         return "";
     }
 
+    private function removeTrailSlash($txt) {
+        return rtrim($txt, '/\\');
+    }
 
     private function initSapi() {
         global $argv;
-        echo "------------------------------------------------------------------\n";
-        echo " AutoLoadOne Generator ".$this::VERSION." (c) Jorge Castro\n";
-        echo "------------------------------------------------------------------\n";
+        $v=$this::VERSION." (c) Jorge Castro";
+        echo <<<eot
 
 
+   ___         __         __                 __ ____           
+  / _ | __ __ / /_ ___   / /  ___  ___ _ ___/ // __ \ ___  ___ 
+ / __ |/ // // __// _ \ / /__/ _ \/ _ `// _  // /_/ // _ \/ -_)
+/_/ |_|\_,_/ \__/ \___//____/\___/\_,_/ \_,_/ \____//_//_/\__/  $v
+
+eot;
+        echo "\n";
         if (count($argv)<2) {
             // help
-            echo "\033[31m \033Help:\n";
-            echo "\033[31mred\033[37m\r\n";
-            echo "\033[32mgreen\033[37m\r\n";
-            echo "\033[41;30mblack on red\033[40;37m\r\n";
-            echo 'echo ^<ESC^>[101m [101mRed[0m';
             echo "-current (scan and generates files from the current folder)\n";
             echo "-folder (folder to scan)\n";
             echo "-filegen (folder where autoload.php will be generate)\n";
@@ -131,7 +137,7 @@ class AutoLoadOne {
         if (!$this->logged) {
             $user=@$_POST["user"];
             $password=@$_POST["password"];
-            if (($user==_AUTOLOADUSER && $password==_AUTOLOADPASSWORD) || _AUTOLOADENTER ) {
+            if (($user==_AUTOLOAD_USER && $password==_AUTOLOAD_PASSWORD) || _AUTOLOAD_ENTER ) {
                 $_SESSION["log"]="1";
                 $this->logged=1;
             } else {
@@ -142,12 +148,12 @@ class AutoLoadOne {
             @session_write_close();
         } else {
             $this->debugMode=isset($_GET['debug'])?true:false;
-            $this->rooturl=@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl;
-            $this->fileGen=@$_POST["fileGen"]?$_POST["fileGen"]:$this->fileGen;
-            $this->excludeNS=@$_POST["excludeNS"]?$_POST["excludeNS"]:$this->excludeNS;
-            $this->excludePath=@$_POST["excludePath"]?$_POST["excludePath"]:$this->excludePath;
+            $this->rooturl=$this->removeTrailSlash(@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl);
+            $this->fileGen=$this->removeTrailSlash(@$_POST["fileGen"]?$_POST["fileGen"]:$this->fileGen);
+            $this->excludeNS=$this->removeTrailSlash(@$_POST["excludeNS"]?$_POST["excludeNS"]:$this->excludeNS);
+            $this->excludePath=$this->removeTrailSlash(@$_POST["excludePath"]?$_POST["excludePath"]:$this->excludePath);
 
-            $this->savefile=@$_POST["savefile"];
+            $this->savefile=(@$_POST["savefile"])?@$_POST["savefile"]:$this->savefile;
             $this->stop=@$_POST["stop"];
             $this->button=@$_POST["button"];
             if ($this->button=="logout") {
@@ -164,8 +170,11 @@ class AutoLoadOne {
         if (php_sapi_name() == "cli") {
             $this->initSapi();
         } else {
-            if (_AUTOLOADONLYCLI) die(1);
-           $this->initWeb();
+            if (_AUTOLOAD_ONLYCLI) {
+                echo "You should run it as a command line parameter.";
+                die(1);
+            }
+            $this->initWeb();
         }
     }
 
@@ -183,12 +192,12 @@ class AutoLoadOne {
 <?php
 /**
  * This class is used for autocomplete.
- * Class _AutoLoad
+ * Class _AUTOLOAD_
  * @noautoload it avoids to index this class
  * @generated by AutoLoadOne {{version}} generated {{date}}
  * @copyright Copyright Jorge Castro C - MIT License. https://github.com/EFTEC/AutoLoadOne
  */
-class _AutoLoad
+class _AUTOLOAD_
 {
     var $debug=false;
     private $_arrautoloadCustom = array(
@@ -198,7 +207,7 @@ class _AutoLoad
 {{include}}
     );
     /**
-     * _AutoLoad constructor.
+     * _AUTOLOAD_ constructor.
      * @param bool $debug
      */
     public function __construct($debug=false)
@@ -240,16 +249,16 @@ class _AutoLoad
             }
         }
     }
-} // end of the class _AutoLoad
-if (defined('_AUTOLOADONEDEBUG')) {
-    $_autoLoad=new _AutoLoad(_AUTOLOADONEDEBUG);
+} // end of the class _AUTOLOAD_
+if (defined('_AUTOLOAD_ONEDEBUG')) {
+    $_AUTOLOAD_=new _AUTOLOAD_(_AUTOLOAD_ONEDEBUG);
 } else {
-    $_autoLoad=new _AutoLoad(false);
+    $_AUTOLOAD_=new _AUTOLOAD_(false);
 }
-spl_autoload_register(function ($class_name)
+spl_AUTOLOAD__register(function ($class_name)
 {
-    global $_autoLoad;
-    $_autoLoad->auto($class_name);
+    global $_AUTOLOAD_;
+    $_AUTOLOAD_->auto($class_name);
 });
 EOD;
         $custom="";
@@ -313,15 +322,6 @@ EOD;
                 echo $filename . " trying token...<br>";
             }
             $tokens = token_get_all($content);
-            /*
-            echo $filename;
-            echo "<pre>";
-            var_dump(token_name(377));
-            var_dump(token_name(378));
-            var_dump($tokens);
-            echo "</pre>";
-            die(1);
-            */
         } catch(Exception $ex) {
             echo "Error in $filename\n";
             die(1);
@@ -442,11 +442,13 @@ EOD;
             $this->log = "";
             $this->result = "";
             if ($this->button) {
+                // die(1);
                 foreach ($files as $f) {
                     $f=$this->fixSeparator($f);
 
                     $pArr = $this->parsePHPFile($f);
                     $dirOriginal = $this->dirNameLinux($f);
+
                     $dir = $this->genPath($dirOriginal);
                     $full = $this->genPath($f);
                     $urlFull = $this->dirNameLinux($full);
@@ -468,16 +470,16 @@ EOD;
                             if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . ".php") {
                                 // namespace doesn't exist and the class is equals to the name
                                 // adding as a folder
-                                $exclude=false;
                                 if (in_array($nsp, $this->excludeNSArr) && $nsp!="") {
                                     $this->addLog("Ignoring namespace (exclusion list): $altUrl=$full");
                                     $exclude=true;
                                 }
-                                if (in_array($dir, $this->excludePathArr)) {
+                                $exclude=false;
+                                if ($this->inExclusion($dir, $this->excludePathArr)) {
                                     $this->addLog("Ignoring relative path (exclusion list): $altUrl=$dir");
                                     $exclude=true;
                                 }
-                                if (in_array($dirOriginal, $this->excludePathArr)) {
+                                if ($this->inExclusion($dirOriginal, $this->excludePathArr)) {
                                     $this->addLog("Ignoring full path (exclusion list): $altUrl=$dirOriginal");
                                     $exclude=true;
                                 }
@@ -510,7 +512,7 @@ EOD;
                                         die(1);
                                     }
                                 } else {
-                                    if ((!in_array($altUrl, $this->excludeNSArr) || $nsp=="") && !in_array($urlFull, $this->excludePathArr)) {
+                                    if ((!in_array($altUrl, $this->excludeNSArr) || $nsp=="") && !$this->inExclusion($urlFull, $this->excludePathArr)) {
                                         $this->addLog("Adding Full: $altUrl=$full");
                                         $nsAlt[$altUrl] = $full;
                                     }
@@ -535,6 +537,21 @@ EOD;
             $this->addLog("No folder specified");
         }
     }
+
+    /**
+     * @param string $path
+     * @param string[] $exclusions
+     * @return bool
+     */
+    private function inExclusion($path,$exclusions) {
+        foreach($exclusions as $ex) {
+            if  ($ex!="") {
+                if (strpos($path, $ex) === 0) return true;
+            }
+        }
+        return false;
+    }
+
     function render() {
         if ($this->debugMode) {
             ob_clean();
@@ -784,13 +801,12 @@ TEM1;
 } // end class AutoLoadOne
 
 
-
-
-
-$auto=new AutoLoadOne();
-$auto->init();
-$auto->process();
-$auto->render();
+if (_AUTOLOAD_SELFRUN) {
+    $auto=new AutoLoadOne();
+    $auto->init();
+    $auto->process();
+    $auto->render();
+}
 
 
 // @noautoload

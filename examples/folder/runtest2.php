@@ -1,16 +1,7 @@
 <?php
-namespace dummy;
 
-use ClassWithoutNameSpace;
-
-define("_AUTOLOADONEDEBUG",true);
-
-// both includes works:
-// include "autoload.php";
-// or
-// include "folder/subfolder/autoload.php";
-
-include "autoload.php";
+define("_AUTOLOAD_ONEDEBUG",true);
+include "..\autoinclude.php";
 
 
 

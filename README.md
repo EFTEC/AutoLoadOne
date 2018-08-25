@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/badge/npm-%3E4.1-blue.svg)]()
 [![php](https://img.shields.io/badge/php->5.4-green.svg)]()
 [![php](https://img.shields.io/badge/php-7.x-green.svg)]()
-[![CocoaPods](https://img.shields.io/badge/docs-40%25-yellow.svg)]()
+[![CocoaPods](https://img.shields.io/badge/docs-60%25-yellow.svg)]()
 
 
 # PHP Auto Include AutoLoadOne Generator
@@ -65,15 +65,15 @@ Or you could run AutoLoadOne.php again and replace the old autoload.php
 
 ```php
 <?php
-define("_AUTOLOADUSER","autoloadone");
-define("_AUTOLOADPASSWORD","autoloadone");
-define("_AUTOLOADENTER",true); // if you want to autoload (no user or password) then set to true
+define("_AUTOLOAD_USER","autoloadone");
+define("_AUTOLOAD_PASSWORD","autoloadone");
+define("_AUTOLOAD_ENTER",true); // if you want to autoload (no user or password) then set to true
 ?>
 ```
 :three:  
    Start the browser
 
-Enter your user and password.  If _AUTOLOADENTER is true then you are logged automatically.
+Enter your user and password.  If _AUTOLOAD_ENTER is true then you are logged automatically.
 
 ![autoloadone login](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/login.jpg "Autoloadone logon")
 
@@ -126,7 +126,7 @@ include the generated file by the previous step. ex: autoload.php
 
 ```php
 <?php
-define("_AUTOLOADONEDEBUG",true); // this line is optional.
+define("_AUTOLOAD_ONEDEBUG",true); // this line is optional. By default, the DEBUG is off. The debug mode is used for find errors.
 include "autoload.php"; // it could be an absolute or relative path.
 ?>
 ```
@@ -169,7 +169,7 @@ _More is better._
 
 > However, the generate file is safe (autoload.php) and you could expose to the net.
 
-* Change the user and password and set _AUTOLOADENTER to false.
+* Change the user and password and set _AUTOLOAD_ENTER to false.
 * Or, Don't put this file in your public website.
 * Or, change the filename.
 * Or, you could block the access to the file using .htaccess or similar.  
@@ -187,6 +187,7 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+* 1.4 2018-08-25 Some example. Now the interface doesn't open automatically by default. It's for security.
 * 1.3 2018-07-05 Now it works with interface and it fixes a problem with some specific file.  It also fixes a problem with linux vs windows folder.
 * 1.2 2018-07-01 Lots of changes. Modified exclusion.  Title and icons for the web ui.  It also allows to disable the web.
 * 1.1 2018-06-26 Some fixes. 
