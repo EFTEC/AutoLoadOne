@@ -94,9 +94,11 @@ Enter your user and password.  If _AUTOLOAD_ENTER is true then you are logged au
 :five:  
  The result should looks this:
 
-![autoloadone screen2](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/screen2.jpg "Autoloadone screen2")
+![autoloadone screen2](https://raw.githubusercontent.com/EFTEC/AutoLoadOne/master/doc/screen2.jpg "Autoloadone screen2")
 
 ## Usage (via cli)
+
+![autoloadone cli](https://raw.githubusercontent.com/EFTEC/AutoLoadOne/master/doc/cli1.jpg)
 
 In the shell, browser to the folder where you want to generate the code and run the next command
 

@@ -801,7 +801,7 @@ TEM1;
 } // end class AutoLoadOne
 
 
-if (_AUTOLOAD_SELFRUN) {
+if (_AUTOLOAD_SELFRUN || php_sapi_name() == "cli") {
     $auto=new AutoLoadOne();
     $auto->init();
     $auto->process();
