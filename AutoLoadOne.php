@@ -146,7 +146,7 @@ eot;
         $param['savefile']=$this->savefile;
         $param['excludeNS']=$this->excludeNS;
         $param['excludePath']=$this->excludePath;
-        return file_put_contents($this->fileConfig,json_encode($param));
+        return file_put_contents($this->fileConfig,json_encode($param,JSON_PRETTY_PRINT));
     }
 
     /**
@@ -301,7 +301,7 @@ if (defined('_AUTOLOAD_ONEDEBUG')) {
 } else {
     $_AUTOLOAD_=new _AUTOLOAD_(false);
 }
-spl_AUTOLOAD__register(function ($class_name)
+spl_AUTOLOAD_register(function ($class_name)
 {
     global $_AUTOLOAD_;
     $_AUTOLOAD_->auto($class_name);
