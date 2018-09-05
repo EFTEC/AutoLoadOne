@@ -167,7 +167,7 @@ _More is better._
 
 > :heavy_exclamation_mark: While the program has a build-in-security measure, however I suggest to protect adding new layers of security such as locating the AutoLoadOne.php file outside of the public/web folder.
 
-> AutoLoadOne.php is not safe (because it writes a generate file), it doesn't have access to the database, neither it allows to write any content to the file.   But, it could overwrite an exist code and put down a system.
+> AutoLoadOne.php is not safe (because it writes a generate file), it doesn't have access to the database, neither it allows to write any content to the file but, it could overwrite an exist code and put down a system.
 
 > However, the generate file is safe (autoload.php) and you could expose to the net.
 
@@ -189,6 +189,7 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+* 1.5 2018-09-05 Now the interface open automatically by default. This file must be delete or restricted if it's used publicity.
 * 1.4 2018-08-25 Some example. Now the interface doesn't open automatically by default. It's for security.
 * 1.3 2018-07-05 Now it works with interface and it fixes a problem with some specific file.  It also fixes a problem with linux vs windows folder.
 * 1.2 2018-07-01 Lots of changes. Modified exclusion.  Title and icons for the web ui.  It also allows to disable the web.

@@ -6,21 +6,22 @@ use Exception;
 if(!defined("_AUTOLOAD_USER")) define("_AUTOLOAD_USER","autoloadone"); // user (web interface)
 if(!defined("_AUTOLOAD_PASSWORD")) define("_AUTOLOAD_PASSWORD","autoloadone"); // password (web interface)
 if(!defined("_AUTOLOAD_ENTER"))  define("_AUTOLOAD_ENTER",true); // if you want to auto login (skip user and password) then set to true
-if(!defined("_AUTOLOAD_SELFRUN"))  define("_AUTOLOAD_SELFRUN",false); // if you want to self run the class.
-if(!defined("_AUTOLOAD_ONLYCLI"))  define("_AUTOLOAD_ONLYCLI",true); // if you want to use only cli. If true, it disabled the web interface.
+if(!defined("_AUTOLOAD_SELFRUN"))  define("_AUTOLOAD_SELFRUN",true); // if you want to self run the class.
+if(!defined("_AUTOLOAD_ONLYCLI"))  define("_AUTOLOAD_ONLYCLI",false); // if you want to use only cli. If true, it disabled the web interface.
+if(!defined("_AUTOLOAD_SAVEPARAM"))  define("_AUTOLOAD_SAVEPARAM",true); // true if you want to save the parameters.
 //*************************************************************
 @ini_set('max_execution_time', 300); // Limit of 5 minutes.
 /**
  * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
- * @version 1.4 2018-08-24
+ * @version 1.5 2018-09-05
  * @noautoload
  * @package eftec\AutoLoadOne
  *
  */
 class AutoLoadOne {
 
-    const VERSION="1.4";
+    const VERSION="1.5";
 
     var $rooturl="";
     var $fileGen="";
@@ -40,6 +41,7 @@ class AutoLoadOne {
     var $statNumPHP=0;
     var $statConflict=0;
     var $statNameSpaces=array();
+    var $fileConfig="autoloadone.json";
     private $excludeNSArr;
     private $excludePathArr;
     private $baseGen;
@@ -52,6 +54,9 @@ class AutoLoadOne {
         $this->fileGen=__DIR__;
         $this->rooturl=__DIR__;
         $this->t1=microtime(true);
+        $this->fileConfig=basename($_SERVER['SCRIPT_FILENAME']);
+        $this->fileConfig=str_replace('.php','.json',$this->fileConfig);
+        //var_dump($this->fileConfig);
     }
     private function getAllParametersCli() {
         $this->rooturl=$this->fixSeparator($this->getParameterCli("folder"));
@@ -129,6 +134,35 @@ eot;
         echo "-excludepath ".$this->excludePath." (path excluded)\n";
         echo "------------------------------------------------------------------\n";
     }
+
+    /**
+     * @return bool|int
+     */
+    private function saveParam() {
+        if (!_AUTOLOAD_SAVEPARAM) return false;
+        $param=[];
+        $param['rooturl']=$this->rooturl;
+        $param['fileGen']=$this->fileGen;
+        $param['savefile']=$this->savefile;
+        $param['excludeNS']=$this->excludeNS;
+        $param['excludePath']=$this->excludePath;
+        return file_put_contents($this->fileConfig,json_encode($param));
+    }
+
+    /**
+     * @return bool
+     */
+    private function loadParam() {
+        if (!_AUTOLOAD_SAVEPARAM) return false;
+        $txt=@file_get_contents($this->fileConfig);
+        if ($txt===false) return false;
+        $param=json_decode($txt,true);
+        $this->fileGen=$param['fileGen'];
+        $this->savefile=$param['savefile'];
+        $this->excludeNS=$param['excludeNS'];
+        $this->excludePath=$param['excludePath'];
+        return true;
+    }
     private function initWeb() {
         @ob_start();
         // Not in cli-mode
@@ -147,15 +181,27 @@ eot;
             }
             @session_write_close();
         } else {
-            $this->debugMode=isset($_GET['debug'])?true:false;
-            $this->rooturl=$this->removeTrailSlash(@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl);
-            $this->fileGen=$this->removeTrailSlash(@$_POST["fileGen"]?$_POST["fileGen"]:$this->fileGen);
-            $this->excludeNS=$this->removeTrailSlash(@$_POST["excludeNS"]?$_POST["excludeNS"]:$this->excludeNS);
-            $this->excludePath=$this->removeTrailSlash(@$_POST["excludePath"]?$_POST["excludePath"]:$this->excludePath);
 
-            $this->savefile=(@$_POST["savefile"])?@$_POST["savefile"]:$this->savefile;
-            $this->stop=@$_POST["stop"];
             $this->button=@$_POST["button"];
+            if (!$this->button) {
+                $this->loadParam();
+            } else {
+                $this->debugMode=isset($_GET['debug'])?true:false;
+                $this->rooturl=$this->removeTrailSlash(@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl);
+                $this->fileGen=$this->removeTrailSlash(@$_POST["fileGen"]?$_POST["fileGen"]:$this->fileGen);
+                $this->excludeNS=$this->removeTrailSlash(@$_POST["excludeNS"]?$_POST["excludeNS"]:$this->excludeNS);
+                $this->excludePath=$this->removeTrailSlash(@$_POST["excludePath"]?$_POST["excludePath"]:$this->excludePath);
+
+                $this->savefile=(@$_POST["savefile"])?@$_POST["savefile"]:$this->savefile;
+                $this->stop=@$_POST["stop"];
+                $this->saveParam();
+            }
+
+
+
+
+
+
             if ($this->button=="logout") {
                 @session_destroy();
                 $this->logged=0;
@@ -184,7 +230,7 @@ eot;
                 $fp = @fopen($file, "w");
                 if (!$fp) throw new Exception("Error");
             } catch (Exception $e) {
-                $this->addLog("ERROR: Unable to save file $file ".$php_errormsg);
+                $this->addLog("ERROR: Unable to save file $file [".$e->getMessage().']');
                 return false;
             }
         }
@@ -317,7 +363,6 @@ EOD;
         $r=array();
         try {
             $content=file_get_contents($filename);
-            $err="";
             if ($this->debugMode) {
                 echo $filename . " trying token...<br>";
             }
@@ -470,11 +515,11 @@ EOD;
                             if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . ".php") {
                                 // namespace doesn't exist and the class is equals to the name
                                 // adding as a folder
+                                $exclude=false;
                                 if (in_array($nsp, $this->excludeNSArr) && $nsp!="") {
                                     $this->addLog("Ignoring namespace (exclusion list): $altUrl=$full");
                                     $exclude=true;
                                 }
-                                $exclude=false;
                                 if ($this->inExclusion($dir, $this->excludePathArr)) {
                                     $this->addLog("Ignoring relative path (exclusion list): $altUrl=$dir");
                                     $exclude=true;
