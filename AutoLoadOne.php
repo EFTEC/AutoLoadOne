@@ -14,14 +14,14 @@ if(!defined("_AUTOLOAD_SAVEPARAM"))  define("_AUTOLOAD_SAVEPARAM",true); // true
 /**
  * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
- * @version 1.5 2018-09-05
+ * @version 1.6 2018-09-28
  * @noautoload
  * @package eftec\AutoLoadOne
  *
  */
 class AutoLoadOne {
 
-    const VERSION="1.5";
+    const VERSION="1.6";
 
     var $rooturl="";
     var $fileGen="";
@@ -42,6 +42,9 @@ class AutoLoadOne {
     var $statConflict=0;
     var $statNameSpaces=array();
     var $fileConfig="autoloadone.json";
+
+    public $extension='.php';
+
     private $excludeNSArr;
     private $excludePathArr;
     private $baseGen;
@@ -55,7 +58,7 @@ class AutoLoadOne {
         $this->rooturl=__DIR__;
         $this->t1=microtime(true);
         $this->fileConfig=basename($_SERVER['SCRIPT_FILENAME']);
-        $this->fileConfig=str_replace('.php','.json',$this->fileConfig);
+        $this->fileConfig=str_replace($this->extension,'.json',$this->fileConfig);
         //var_dump($this->fileConfig);
     }
     private function getAllParametersCli() {
@@ -107,7 +110,7 @@ eot;
             // help
             echo "-current (scan and generates files from the current folder)\n";
             echo "-folder (folder to scan)\n";
-            echo "-filegen (folder where autoload.php will be generate)\n";
+            echo "-filegen (folder where autoload".$this->extension." will be generate)\n";
             echo "-save (save the file to generate)\n";
             echo "-excludens (namespace excluded)\n";
             echo "-excludepath (path excluded)\n";
@@ -128,7 +131,7 @@ eot;
         }
 
         echo "-folder ".$this->rooturl." (folder to scan)\n";
-        echo "-filegen ".$this->fileGen." (folder where autoload.php will be generate)\n";
+        echo "-filegen ".$this->fileGen." (folder where autoload".$this->extension." will be generate)\n";
         echo "-save ".($this->savefile?"yes":"no")." (save filegen)\n";
         echo "-excludens ".$this->excludeNS." (namespace excluded)\n";
         echo "-excludepath ".$this->excludePath." (path excluded)\n";
@@ -224,7 +227,7 @@ eot;
         }
     }
 
-    function genautoload($file,$namespaces,$namespacesAlt) {
+    function genautoload($file,$namespaces,$namespacesAlt,$autoruns) {
         if ($this->savefile) {
             try {
                 $fp = @fopen($file, "w");
@@ -276,7 +279,7 @@ class _AUTOLOAD_
         }
         // normal (folder) cases
         if (isset($this->_arrautoload[$ns])) {
-            $this->loadIfExists($this->_arrautoload[$ns] . "/" . $cls . ".php");
+            $this->loadIfExists($this->_arrautoload[$ns] . "/" . $cls . "{{extension}}");
             return;
         }
     }
@@ -306,6 +309,9 @@ spl_AUTOLOAD_register(function ($class_name)
     global $_AUTOLOAD_;
     $_AUTOLOAD_->auto($class_name);
 });
+// autorun
+{{autorun}}
+
 EOD;
         $custom="";
         foreach($namespacesAlt as $k=>$v) {
@@ -321,10 +327,18 @@ EOD;
         if ($include!="") {
             $include=substr($include,0,-2);
         }
+        $autorun="";//
+        foreach($autoruns as $k=>$v) {
+            $autorun.="@include __DIR__.'$v';\n";
+        }
+        //
 
         $template=str_replace("{{custom}}",$custom,$template);
         $template=str_replace("{{include}}",$include,$template);
+
+        $template=str_replace("{{autorun}}",$autorun,$template);
         $template=str_replace("{{version}}",$this::VERSION,$template);
+        $template=str_replace("{{extension}}",$this->extension,$template);
         $template=str_replace("{{date}}", date("Y/m/d h:i:s"),$template);
 
         if ($this->savefile) {
@@ -345,7 +359,7 @@ EOD;
         foreach ( $ffs as $ff ){
             if ( $ff != '.' && $ff != '..' ){
                 if ( strlen($ff)>=5 ) {
-                    if ( substr($ff, -4) == '.php' ) {
+                    if ( substr($ff, -4) == $this->extension ) {
                         $list[] = $dir.'/'.$ff;
                     }
                 }
@@ -355,11 +369,15 @@ EOD;
         }
         return $list;
     }
+
     /**
      * @param $filename
+     * @param bool $runMe
+     * @param bool $runMeFirst
      * @return array
      */
-    function parsePHPFile($filename) {
+    function parsePHPFile($filename,&$runMe,&$runMeFirst) {
+        $runMe=false;
         $r=array();
         try {
             $content=file_get_contents($filename);
@@ -376,13 +394,21 @@ EOD;
                 if (strpos($token[1],"@noautoload")!==false) {
                     return array();
                 }
+                if (strpos($token[1],"@autorun")!==false) {
+                    $runMe = true;
+                    if (strpos($token[1],"@autorun first")!==false) {
+                        $runMeFirst=true;
+                    } else {
+                        $runMeFirst=false;
+                    }
+                }
             }
         }
         $nameSpace="";
         $className="";
         foreach($tokens as $p=>$token) {
             if (is_array($token) && $token[0]==T_NAMESPACE) {
-                // encontramos un namespace
+                // We found a namespace
                 $ns="";
                 for($i=$p+2;$i<$p+30;$i++) {
                     if (is_array($tokens[$i])) {
@@ -466,10 +492,12 @@ EOD;
         $this->rooturl=$this->fixSeparator($this->rooturl);
         $this->fileGen=$this->fixSeparator($this->fileGen);
         if ($this->rooturl) {
-            $this->baseGen=$this->dirNameLinux($this->fileGen."/autoload.php");
+            $this->baseGen=$this->dirNameLinux($this->fileGen."/autoload".$this->extension);
             $files = $this->listFolderFiles($this->rooturl);
             $ns = array();
             $nsAlt = array();
+            $autoruns=array();
+            $autorunsFirst=array();
             $this->excludeNSArr = str_replace("\n", "", $this->excludeNS);
             $this->excludeNSArr = str_replace("\r", "", $this->excludeNSArr);
             $this->excludeNSArr = str_replace(" ", "", $this->excludeNSArr);
@@ -490,14 +518,26 @@ EOD;
                 // die(1);
                 foreach ($files as $f) {
                     $f=$this->fixSeparator($f);
+                    $runMe=false;
+                    $runMeFirst=false;
+                    $pArr = $this->parsePHPFile($f,$runMe,$runMeFirst);
 
-                    $pArr = $this->parsePHPFile($f);
                     $dirOriginal = $this->dirNameLinux($f);
 
                     $dir = $this->genPath($dirOriginal);
                     $full = $this->genPath($f);
                     $urlFull = $this->dirNameLinux($full);
                     $basefile = basename($f);
+
+                    if ($runMe) {
+                        if ($runMeFirst) {
+                            $autorunsFirst[]=$full;
+                            $this->addLog("Adding autorun (priority): $full");
+                        } else {
+                            $autoruns[]=$full;
+                            $this->addLog("Adding autorun: $full");
+                        }
+                    }
                     foreach ($pArr as $p) {
 
 
@@ -512,20 +552,21 @@ EOD;
                         $altUrl = ($nsp != "") ? $nsp . '\\' . $cs : $cs; // namespace
 
                         if ($nsp != "" || $cs != "") {
-                            if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . ".php") {
+                            if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs .$this->extension) {
                                 // namespace doesn't exist and the class is equals to the name
                                 // adding as a folder
                                 $exclude=false;
                                 if (in_array($nsp, $this->excludeNSArr) && $nsp!="") {
-                                    $this->addLog("Ignoring namespace (exclusion list): $altUrl=$full");
+                                //if ($this->inExclusion($nsp, $this->excludeNSArr) && $nsp!="") {
+                                    $this->addLog("\tIgnoring namespace (exclusion list): $altUrl=$full");
                                     $exclude=true;
                                 }
                                 if ($this->inExclusion($dir, $this->excludePathArr)) {
-                                    $this->addLog("Ignoring relative path (exclusion list): $altUrl=$dir");
+                                    $this->addLog("\tIgnoring relative path (exclusion list): $altUrl=$dir");
                                     $exclude=true;
                                 }
                                 if ($this->inExclusion($dirOriginal, $this->excludePathArr)) {
-                                    $this->addLog("Ignoring full path (exclusion list): $altUrl=$dirOriginal");
+                                    $this->addLog("\tIgnoring full path (exclusion list): $altUrl=$dirOriginal");
                                     $exclude=true;
                                 }
 
@@ -535,7 +576,7 @@ EOD;
                                         $nsAlt[$altUrl] = $full;
                                     } else {
                                         if (isset($ns[$nsp])) {
-                                            $this->addLog("Folder already used: $nsp=$dir");
+                                            $this->addLog("\tFolder already used: $nsp=$dir");
                                         } else {
                                             $ns[$nsp] = $dir;
                                             $this->addLog("Adding Folder: $nsp=$dir");
@@ -551,7 +592,7 @@ EOD;
                                 // b) if namespace is already defined for a different folder.
                                 // c) multiple namespaces
                                 if (isset($nsAlt[$altUrl])) {
-                                    $this->addLog("Error Conflict:Class with name $altUrl is already defined.");
+                                    $this->addLog("\tError Conflict:Class with name $altUrl is already defined.");
                                     $this->statConflict++;
                                     if ($this->stop) {
                                         die(1);
@@ -567,15 +608,16 @@ EOD;
                     }
                     if (count($pArr)==0) {
                         $this->statNumPHP++;
-                        $this->addLog("Ignoring $full. Reason: No class found on file.");
+                        $this->addLog("\tIgnoring $full. Reason: No class found on file.");
                     }
                 }
-
-                $this->result = $this->genautoload($this->fileGen."/autoload.php", $ns, $nsAlt);
+                $autoruns=array_merge($autorunsFirst,$autoruns);
+                $this->result = $this->genautoload($this->fileGen."/autoload".$this->extension, $ns, $nsAlt,$autoruns);
             }
             $this->addLog("Stat number of classes: ".$this->statNumClass);
             $this->addLog("Stat number of namespaces: ".count($this->statNameSpaces));
             $this->addLog("Stat number of PHP Files: ".$this->statNumPHP);
+            $this->addLog("Stat number of PHP Autorun: ".count($autoruns));
             $this->addLog("Stat number of conflict: ".$this->statConflict);
 
         } else {
@@ -591,10 +633,29 @@ EOD;
     private function inExclusion($path,$exclusions) {
         foreach($exclusions as $ex) {
             if  ($ex!="") {
-                if (strpos($path, $ex) === 0) return true;
+                if (substr($ex,-1,1)=='*') {
+                    $bool=$this->startwith($path,substr($ex,0,-1));
+                    if ($bool) return true;
+                }
+                if (substr($ex,0,1)=='*') {
+                    $bool=$this->endswith($path,$ex);
+                    if ($bool) return true;
+                }
+                if (strpos($ex,"*")===false) {
+                    if ($path== $ex) return true;
+                }
             }
         }
         return false;
+    }
+    function startwith($string, $test) {
+        return (strpos($string,$test)===0);
+    }
+    function endswith($string, $test) {
+        $strlen = strlen($string);
+        $testlen = strlen($test);
+        if ($testlen > $strlen) return false;
+        return substr_compare($string, $test, $strlen - $testlen, $testlen) === 0;
     }
 
     function render() {
@@ -605,7 +666,6 @@ EOD;
         if (php_sapi_name() == "cli") {
             $t2=microtime(true);
             echo "\n".(round(($t2-$this->t1)*1000)/1000)." sec. Finished\n";
-
 
         } else {
 
@@ -697,6 +757,7 @@ LOGS;
               </div>             
               <div class="panel-body">
                 <form class="form-horizontal" role="form" method="post">
+
                   <div class="form-group">
                     <div class="col-sm-2">
                       <label class="control-label">Root Folder <span class="text-danger">(Req)</span> </label>
@@ -704,7 +765,11 @@ LOGS;
                     <div class="col-sm-10">
                       <input type="text" class="form-control" placeholder="ex. \htdoc\web  or c:\htdoc\web"
                       name="rooturl" value="{{rooturl}}">
-                      <em>Root folder to scan.</em>
+                      <em>Root folder to scan. Extension: <b>{{extension}}</b></em><br>
+                      <em>PHP files that contain the comment <b>@noautoload</b> are ignored</em><br>
+                      <em>PHP files that don't contain a class/interface are ignored. Its allowed to have multiple classes per file</em><br>
+                      <em>PHP files that contain the comment <b>"@autorun"</b> are executed (even if it doesn't have a class)</em><br>
+                      <em>PHP files that contain the comment <b>"@autorun first"</b> are executed with priority</em><br>
                     </div>
                   </div>
                   <div class="form-group">
@@ -716,7 +781,7 @@ LOGS;
                     <div class="col-sm-10">
                       <input type="text" class="form-control" placeholder="ex. /etc/httpd/web or c:\apache\htdoc"
                       name="fileGen" value="{{fileGen}}">
-                      <em>Full path (local file) where the autoload.php will be generated.<br>
+                      <em>Full path (local file) where the autoload{{extension}} will be generated.<br>
                       Note: This path is also used to determine the relativity of the includes</em>
                     </div>
                   </div>
@@ -746,7 +811,10 @@ LOGS;
                     <div class="col-sm-10">
                       <textarea class="form-control" rows="5" name="excludePath">{{excludePath}}</textarea>
                       <em>Relative path without trailing "/" separated by comma. Example
-                      vendor/pchart/class</em></div>
+                      vendor/pchart/class</em><br>
+                      <em>You could also use wildcards :<br>
+                       /path/* for any folder that starts with "/path/*"<br>
+                       */path/ for any folder that ends with "*/path/"</em></div>
                   </div>
 
                   <div class="form-group">
@@ -808,7 +876,7 @@ TEM1;
 
                 $web=str_replace("{{rooturl}}",$this->rooturl,$web);
                 $web=str_replace("{{fileGen}}",$this->fileGen,$web);
-
+                $web=str_replace("{{extension}}",$this->extension,$web);
 
 
                 $web=str_replace("{{excludeNS}}",$this->excludeNS,$web);

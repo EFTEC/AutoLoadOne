@@ -11,6 +11,7 @@ echo "And, when you are ready, you could test the result on <a href='runtest.php
 echo "The user and password is autoloadone/autoloadone<hr>";
 include "../AutoLoadOne.php";
 $auto=new AutoLoadOne();
+$auto->extension='.php'; // it's not required. By default it's .php
 $auto->rooturl=__DIR__; // this default value is optional, it's only for the example
 $auto->fileGen=__DIR__; // this default value is optional, it's only for the example
 $auto->savefile=1; // this default value is optional, it's only for the example

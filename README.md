@@ -148,8 +148,37 @@ In the /test folder you could find some example to try.
 // @noautoload
 ?>
 ```
+
+## Autorun
+
+> If you want to execute (run) a php file, then you could add the next comment.
+
+```php
+<?php
+// @autorun
+?>
+```
+
+> You could also set priority to the execution by adding a comment with @autorun first
+
+```php
+<?php
+// @autorun first
+?>
+```
+
+
 > If you find the error: Parse error: syntax error, <message> in on line 000. Then some of the php files scanned have some syntax error. The solution is to fix the problem or to exclude the whole folder.  
 > How to find the file with error? You could run the page with the debug flag: autoloadone.php?debug=1  
+
+## Extension
+
+You could change the extension (by default it is .php) by running the next command
+
+```php
+$auto=new AutoLoadOne();
+$auto->extension='.php'; // it's not required. By default it's .php
+```
 
 ## Benchmark
 
@@ -189,6 +218,7 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+* 1.6 2018-09-28 Added wildcard (*) to exclusion list (folders).
 * 1.5 2018-09-05 Now the interface open automatically by default. This file must be delete or restricted if it's used publicity.
 * 1.4 2018-08-25 Some example. Now the interface doesn't open automatically by default. It's for security.
 * 1.3 2018-07-05 Now it works with interface and it fixes a problem with some specific file.  It also fixes a problem with linux vs windows folder.
@@ -197,10 +227,10 @@ Deny from all
 * 1.0 2018-06-24 First version  
 
 ## Todo
-* Save configuration
+* ~~Save configuration~~
 * CLI (more commands)
 * Clean the code.
 * ~~Convert to a single class.~~
 * External folder/library (relative or absolute path)
 * The generation fails if a php file has an error.
-* Specify the extensions. By default it scans only .php files.
+* ~~Specify the extensions. By default it scans only .php files.~~
