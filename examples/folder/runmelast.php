@@ -3,4 +3,4 @@
  * @autorun
  */
 
-echo "this code is called thanks to runme";
+echo "This code <b>[".__FILE__."]</b> is called thanks to the annotation @autorun<br>";

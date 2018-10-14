@@ -1,7 +1,7 @@
 <?php
 
 
-namespace folder;
+namespace nsfolder;
 
 
 class NaturalClass

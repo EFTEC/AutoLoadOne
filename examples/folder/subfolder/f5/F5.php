@@ -1,5 +1,5 @@
 <?php
-namespace folder\subfolder\f5;
+namespace nsfolder\subnamespace\f5;
 class F5 {
     
 }

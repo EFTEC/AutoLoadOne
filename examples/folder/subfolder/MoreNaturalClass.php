@@ -1,5 +1,5 @@
 <?php
-namespace folder\subfolder;
+namespace nsfolder\subnamespace;
 
 
 class MoreNaturalClass

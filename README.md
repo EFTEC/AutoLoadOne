@@ -1,18 +1,20 @@
-[![Packagist](https://img.shields.io/packagist/l/doctrine/orm.svg)]()
+# PHP Auto Include AutoLoadOne Generator
+
+AutoloadOne is a program that generates an autoload class (Auto Include) for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.   It is a direct alternative to Composer's autoload, but it works differently.   Composer's autoload, scans the folders during runtime, while this library only scans the folder once and it stores the result.
+
+[![Packagist](https://img.shields.io/packagist/v/eftec/autoloadone.svg)](https://packagist.org/packages/eftec/autoloadone)
 [![Maintenance](https://img.shields.io/maintenance/yes/2018.svg)]()
-[![npm](https://img.shields.io/badge/npm-%3E4.1-blue.svg)]()
 [![php](https://img.shields.io/badge/php->5.4-green.svg)]()
 [![php](https://img.shields.io/badge/php-7.x-green.svg)]()
 [![CocoaPods](https://img.shields.io/badge/docs-60%25-yellow.svg)]()
 
 
-# PHP Auto Include AutoLoadOne Generator
-AutoloadOne is a program that generates an autoload class (Auto Include) for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.
+
 Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate the autoload class, include and you are ready to load any class (even classes without a namespace, classes in the namespace in different folders, multiple classes defined in a single file...).  
 
 AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.  
 
-**Last Update September 5, 2018**
+**Last Update Octuber 14, 2018**
 
 > "Universal Autoloading classes in PHP, any class, any time!"
 
@@ -53,7 +55,8 @@ Or you could run AutoLoadOne.php again and replace the old autoload.php
 :white_check_mark: Support CLI and Web-UI.  
 :white_check_mark: It doesn't require APCU, lock files or cache.  
 :white_check_mark: It´s compatible with practically any project, including a project that uses Composer's autoload.  
-:white_check_mark: PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.  
+:white_check_mark: PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.
+:white_check_mark: It allows libraries outside of the project folder.  
 
 ## Usage (generate code via Web)
 
@@ -110,6 +113,7 @@ Commands available :
 * save yes/no (save the file to generate).This option is required.
 * excludens (namespace excluded)  
 * excludepath (path excluded)  
+* externalpath (include an external path). An external path is a library that lives outside of the project folder
 
 
 > Example: php autoloadone.php -folder folder\scan -filegen folder\whereautoload\ -save yes
@@ -149,6 +153,7 @@ In the /test folder you could find some example to try.
 ?>
 ```
 
+
 ## Autorun
 
 > If you want to execute (run) a php file, then you could add the next comment.
@@ -179,6 +184,11 @@ You could change the extension (by default it is .php) by running the next comma
 $auto=new AutoLoadOne();
 $auto->extension='.php'; // it's not required. By default it's .php
 ```
+## Security
+
+You could block the access to the file
+
+RedirectMatch 403 ^/folder/^/folder/.*$
 
 ## Benchmark
 
@@ -218,6 +228,8 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+* 1.8 2018-10-14 Added external path and some fixes. Now you could add a path without comma (it's added automatically) [WebUI] 
+* 1.7 2018-10-12 Some small fixes. Now by default, the system uses the caller's path instead of the AutoLoadOne.php path.
 * 1.6 2018-09-28 Added wildcard (*) to exclusion list (folders).
 * 1.5 2018-09-05 Now the interface open automatically by default. This file must be delete or restricted if it's used publicity.
 * 1.4 2018-08-25 Some example. Now the interface doesn't open automatically by default. It's for security.
@@ -228,9 +240,9 @@ Deny from all
 
 ## Todo
 * ~~Save configuration~~
-* CLI (more commands)
+* ~~CLI (more commands)~~
 * Clean the code.
 * ~~Convert to a single class.~~
-* External folder/library (relative or absolute path)
+* ~~External folder/library (relative or absolute path)~~
 * The generation fails if a php file has an error.
 * ~~Specify the extensions. By default it scans only .php files.~~
