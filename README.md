@@ -184,11 +184,29 @@ You could change the extension (by default it is .php) by running the next comma
 $auto=new AutoLoadOne();
 $auto->extension='.php'; // it's not required. By default it's .php
 ```
-## Security
 
-You could block the access to the file
+## Statistic and optimization
 
-RedirectMatch 403 ^/folder/^/folder/.*$
+This library generates the next statistics.  **The objective is simple, you must reduce (in the possible), the size of the map. The smaller the map, then the better.**
+
+```
+Number of Classes: 42
+Number of Namespaces: 12
+Number of Maps: 16
+Number of PHP Files: 50
+Number of PHP Autorun: 3
+Number of conflicts: 0
+Ratio map per file: 32% Acceptable (less is better. 100% means one map/one file)<
+Ratio map per classes: 38.1% Acceptable (less is better. 100% means one map/one class)
+Map size: 3.1 kbytes (less is better, it's an estimate of the memory used by the map)
+```
+
+How can I reduce the map?
+
+* You could use one class on file. This class must have the same name than the filename.  
+  > Example Customer.php and class Customer { }
+* Grouping classes of of the same namespacein the same folder. So, the library could maps the whole namespace as a single folder instead of map per file/class.
+* You could remove namespaces and folders that you don't need it and namespaces and folders that they don't need to be autoloaded. 
 
 ## Benchmark
 
@@ -203,6 +221,10 @@ _More is better._
 > This chart compares the performance against INCLUDE.
 
 ## Security
+
+You could block the access to the file
+
+RedirectMatch 403 ^/folder/^/folder/.*$
 
 > :heavy_exclamation_mark: While the program has a build-in-security measure, however I suggest to protect adding new layers of security such as locating the AutoLoadOne.php file outside of the public/web folder.
 
