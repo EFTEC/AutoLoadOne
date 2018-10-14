@@ -200,13 +200,54 @@ Ratio map per file: 32% Acceptable (less is better. 100% means one map/one file)
 Ratio map per classes: 38.1% Acceptable (less is better. 100% means one map/one class)
 Map size: 3.1 kbytes (less is better, it's an estimate of the memory used by the map)
 ```
+Example of the screen:
 
-How can I reduce the map?
+![autoloadone screen](doc/screen3.jpg "Autoloadone screen")
 
-* You could use one class on file. This class must have the same name than the filename.  
+In the log file:
+* White means a normal operation
+* Yellow means a warning. For example, some file was excluded.
+* Green means an optimization.
+* Blue means an important operation was done succesfully.
+* Red is an error that must be attended.
+
+
+### How can I reduce the map?
+
+* You could use one class / one file, also, the class must have the same name than the filename.  **The name of the namespace is irrelevant**
   > Example Customer.php and class Customer { }
-* Grouping classes of of the same namespacein the same folder. So, the library could maps the whole namespace as a single folder instead of map per file/class.
-* You could remove namespaces and folders that you don't need it and namespaces and folders that they don't need to be autoloaded. 
+* Grouping classes of the same namespace in the same folder. So, the library could maps the whole namespace as a single folder instead of map per file/class. 
+* * :file_folder: repository (_repositoryns\\_)
+* * * :page_with_curl: MyClass.php _repositoryns\\MyClass_
+* * * :page_with_curl: MyClass2.php _repositoryns\\MyClass2_
+* * :file_folder: model (_namespace_model\\_)
+* * * :page_with_curl: MyClass.php _namespace_model\\MyClass_
+* * * :page_with_curl: MyClass2.php _namespace_model\\MyClass2_
+* You could remove (:scissors:) namespaces and folders that you don't need it. Some namespaces and folders are used by the system however, they don't require to be autoloaded because they are loaded manually (for example, most libraries do that)
+* * :file_folder: somelibrary 
+* * * :page_with_curl: MainLibraryClass.php 
+* * * :page_with_curl: IncludesLibrary.php :scissors:
+* * * :file_folder: somelibrary :scissors:
+* * * * :page_with_curl: MoreIncludesLibrary.php :scissors:
+* * * * :page_with_curl: MoreIncludesLibrary.php :scissors:
+* You could also exclude a file/class/include/strut by adding the tag **@noautoload**
+```php
+/* @noautoload */
+class Someclass {
+
+}
+```
+* Files with the extension **.php** (or the defined extension) are loaded. So, Files **.inc**, **.phpinclude** or similar, are automatically excluded (:scissors:).
+* * :file_folder: somelibrary 
+* * * :page_with_curl: file.inc.php (is included)
+* * * :page_with_curl: IncludesLibrary.inc :scissors:
+* * * :page_with_curl: MoreIncludesLibrary.inc :scissors:
+* Another optimization is to use **many classes in the same file**. This library even allows to use multi classes / multi namespaces in the same file. So, it's possible to create a bulk version of a project.
+* * :page_with_curl: AllClassesOneFile.php 
+* * * :pencil2: _repositoryns\\MyClass_
+* * * :pencil2: _repositoryns\\MyClass3_
+* * * :pencil2: _anotherns\\MyClass2_
+
 
 ## Benchmark
 
