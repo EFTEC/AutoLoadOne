@@ -9,6 +9,8 @@ namespace specialnamespace;
  */
 class RunMeClass
 {
+    /** @var RunMeClass */
+    var $instance;
 
     /**
      * RunMeClass constructor.
@@ -17,4 +19,7 @@ class RunMeClass
     {
         echo "This class was created";
     }
+
+
+
 }

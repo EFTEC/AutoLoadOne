@@ -14,24 +14,25 @@ if(!defined("_AUTOLOAD_SAVEPARAM"))  define("_AUTOLOAD_SAVEPARAM",true); // true
 /**
  * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
- * @version 1.8 2018-10-14
+ * @version 1.9 2018-10-14
  * @noautoload
  * @package eftec\AutoLoadOne
  *
  */
 class AutoLoadOne {
 
-    const VERSION="1.8";
+    const VERSION="1.9";
 
     var $rooturl="";
     var $fileGen="";
-    var $savefile=0;
+    var $savefile=1;
     var $stop=0;
     var $button=0;
     var $excludeNS="";
     var $excludePath="";
     var $externalPath="";
     var $log="";
+    var $logStat="";
     var $result="";
     var $cli="";
     var $logged=false;
@@ -41,7 +42,9 @@ class AutoLoadOne {
     var $statNumClass=0;
     var $statNumPHP=0;
     var $statConflict=0;
+    var $statError=0;
     var $statNameSpaces=array();
+    var $statByteUsed=1024;
     var $fileConfig="autoloadone.json";
 
     public $extension='.php';
@@ -55,12 +58,13 @@ class AutoLoadOne {
      */
     public function __construct()
     {
-        $this->fileGen=__DIR__;// dirname($_SERVER['SCRIPT_FILENAME']);
-        $this->rooturl=__DIR__;// dirname($_SERVER['SCRIPT_FILENAME']);
+        $this->fileGen=getcwd();// dirname($_SERVER['SCRIPT_FILENAME']);
+        $this->rooturl=getcwd();// dirname($_SERVER['SCRIPT_FILENAME']);
         $this->t1=microtime(true);
         $this->fileConfig=basename($_SERVER['SCRIPT_FILENAME']); // the config name shares the same name than the php but with extension .json
-        $this->fileConfig=__DIR__.'/'.str_replace($this->extension,'.json',$this->fileConfig);
+        $this->fileConfig=getcwd().'/'.str_replace($this->extension,'.json',$this->fileConfig);
         //var_dump($this->fileConfig);
+
     }
     private function getAllParametersCli() {
         $this->rooturl=$this->fixSeparator($this->getParameterCli("folder"));
@@ -155,7 +159,7 @@ eot;
         $param['excludeNS']=$this->excludeNS;
         $param['excludePath']=$this->excludePath;
         $param['externalPath']=$this->externalPath;
-        return file_put_contents($this->fileConfig,json_encode($param,JSON_PRETTY_PRINT));
+        return @file_put_contents($this->fileConfig,json_encode($param,JSON_PRETTY_PRINT));
     }
 
     /**
@@ -164,13 +168,13 @@ eot;
     private function loadParam() {
         if (!_AUTOLOAD_SAVEPARAM) return false;
         $txt=@file_get_contents($this->fileConfig);
-        if ($txt===false) return false;
+        if ($txt===false)  return false;
         $param=json_decode($txt,true);
-        $this->fileGen=$param['fileGen'];
-        $this->savefile=$param['savefile'];
-        $this->excludeNS=$param['excludeNS'];
-        $this->excludePath=$param['excludePath'];
-        $this->externalPath=$param['externalPath'];
+        $this->fileGen=@$param['fileGen'];
+        $this->savefile=@$param['savefile'];
+        $this->excludeNS=@$param['excludeNS'];
+        $this->excludePath=@$param['excludePath'];
+        $this->externalPath=@$param['externalPath'];
         return true;
     }
     private function initWeb() {
@@ -194,7 +198,10 @@ eot;
 
             $this->button=@$_POST["button"];
             if (!$this->button) {
-                $this->loadParam();
+                $loadOk=$this->loadParam();
+                if ($loadOk===false) {
+                    $this->addLog('Unable to load configuration file <b>'.$this->fileConfig.'</b>. It is not obligatory','warning');
+                }
             } else {
                 $this->debugMode=isset($_GET['debug'])?true:false;
                 $this->rooturl=$this->removeTrailSlash(@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl);
@@ -210,7 +217,10 @@ eot;
                     ));
                 $this->savefile=(@$_POST["savefile"])?@$_POST["savefile"]:$this->savefile;
                 $this->stop=@$_POST["stop"];
-                $this->saveParam();
+                $ok=$this->saveParam();
+                if ($ok===false) {
+                    $this->addLog('Unable to save configuration file <b>'.$this->fileConfig.'</b>. It is not obligatory.','warning');
+                }
             }
             if ($this->button=="logout") {
                 @session_destroy();
@@ -236,6 +246,9 @@ eot;
     }
 
     function init() {
+        $this->log = "";
+        $this->logStat="";
+
         if (php_sapi_name() == "cli") {
             $this->initSapi();
         } else {
@@ -248,15 +261,6 @@ eot;
     }
 
     function genautoload($file, $namespaces, $namespacesAlt, $pathAbsolute, $autoruns) {
-        if ($this->savefile) {
-            try {
-                $fp = @fopen($file, "w");
-                if (!$fp) throw new Exception("Error");
-            } catch (Exception $e) {
-                $this->addLog("ERROR: Unable to save file $file [".$e->getMessage().']','error');
-                return false;
-            }
-        }
         $template=<<<'EOD'
 <?php
 /**
@@ -361,7 +365,7 @@ EOD;
         $include=rtrim($include,",\n");
         $includeAbsolute="";
         foreach($pathAbsolute as $k=> $v) {
-           if ($v)  $includeAbsolute.="\t\t'$k' => true,\n";
+            if ($v)  $includeAbsolute.="\t\t'$k' => true,\n";
         }
         $includeAbsolute=rtrim($includeAbsolute,",\n");
         $autorun="";//
@@ -379,10 +383,16 @@ EOD;
         $template=str_replace("{{extension}}",$this->extension,$template);
         $template=str_replace("{{date}}", date("Y/m/d h:i:s"),$template);
 
+        // 1024 is the memory used by code, *1.3 is an overhead, usually it's mess.
+        $this->statByteUsed=(strlen($include)+strlen($includeAbsolute)+strlen($custom))*1.3+1024;
         if ($this->savefile) {
-            fwrite($fp, $template);
-            fclose($fp);
-            $this->addLog("File $file generated",'info');
+            $ok=@file_put_contents($file,$template);
+            if ($ok) {
+                $this->addLog("File <b>$file</b> generated",'info');
+            } else {
+                $this->addLog("Unable to write file <b>$file</b>. Check the folder and permissions. You could write it manually.",'error');
+                $this->statError++;
+            }
             $this->addLog("&nbsp;");
         }
         return $template;
@@ -405,9 +415,11 @@ EOD;
         }
     }
     function listFolderFilesAlt($dir,&$list){
+        if ($dir==="") return array();
         $ffs =@scandir($this->fixRelative($dir));
         if ($ffs===false) {
-            $this->addLog("\nError: Unable to scan folder [$dir]",'error');
+            $this->addLog("\nError: Unable to reader folder [$dir]. Check the name of the folder and the permissions",'error');
+            $this->statError++;
             return array();
         }
         foreach ( $ffs as $ff ){
@@ -445,6 +457,7 @@ EOD;
         foreach($tokens as $p=>$token) {
             if (is_array($token) && ($token[0]==T_COMMENT ||$token[0]==T_DOC_COMMENT)) {
                 if (strpos($token[1],"@noautoload")!==false) {
+                    $runMe="@noautoload";
                     return array();
                 }
                 if (strpos($token[1],"@autorun")!==false) {
@@ -552,6 +565,18 @@ EOD;
                 case 'info':
                     $this->log .= "<div class='bg-primary'>$txt</div>";
                     break;
+                case 'success':
+                    $this->log .= "<div class='bg-success'>$txt</div>";
+                    break;
+                case 'stat':
+                    $this->logStat .= "<div >$txt</div>";
+                    break;
+                case 'statinfo':
+                    $this->logStat .= "<div class='bg-primary'>$txt</div>";
+                    break;
+                case 'staterror':
+                    $this->logStat .= "<div class='bg-danger'>$txt</div>";
+                    break;
                 default:
                     $this->log .= "<div>$txt</div>";
                     break;
@@ -561,7 +586,6 @@ EOD;
     }
 
     function process() {
-        $this->log = "";
         $this->rooturl=$this->fixSeparator($this->rooturl);
         $this->fileGen=$this->fixSeparator($this->fileGen);
         if ($this->rooturl) {
@@ -617,21 +641,21 @@ EOD;
                     $urlFull = $this->dirNameLinux($full); ///folder/subfolder/f1
                     $basefile = basename($f); //F1.php
 
-                   // echo "$dir $full $urlFull $basefile<br>";
+                    // echo "$dir $full $urlFull $basefile<br>";
 
                     if ($runMe!='') {
                         switch ($runMe) {
                             case '@autorun first':
                                 $autorunsFirst[] = $full;
-                                $this->addLog("Adding autorun (priority): $full");
+                                $this->addLog("Adding autorun (priority): <b>$full</b>");
                                 break;
                             case '@autorunclass':
                                 $autoruns[] = $full;
-                                $this->addLog("Adding autorun (class, use future): $full");
+                                $this->addLog("Adding autorun (class, use future): <b>$full</b>");
                                 break;
                             case '@autorun':
                                 $autoruns[] = $full;
-                                $this->addLog("Adding autorun: $full");
+                                $this->addLog("Adding autorun: <b>$full</b>");
                                 break;
                         }
                     }
@@ -654,31 +678,31 @@ EOD;
                                 // adding as a folder
                                 $exclude=false;
                                 if (in_array($nsp, $this->excludeNSArr) && $nsp!="") {
-                                //if ($this->inExclusion($nsp, $this->excludeNSArr) && $nsp!="") {
-                                    $this->addLog("\tIgnoring namespace (exclusion list): $altUrl=$full",'warning');
+                                    //if ($this->inExclusion($nsp, $this->excludeNSArr) && $nsp!="") {
+                                    $this->addLog("\tIgnoring namespace (exclusion list): <b>$altUrl : $full</b>",'warning');
                                     $exclude=true;
                                 }
                                 if ($this->inExclusion($dir, $this->excludePathArr)) {
-                                    $this->addLog("\tIgnoring relative path (exclusion list): $altUrl=$dir",'warning');
+                                    $this->addLog("\tIgnoring relative path (exclusion list): <b>$altUrl : $dir</b>",'warning');
                                     $exclude=true;
                                 }
                                 if ($this->inExclusion($dirOriginal, $this->excludePathArr)) {
-                                    $this->addLog("\tIgnoring full path (exclusion list): $altUrl=$dirOriginal",'warning');
+                                    $this->addLog("\tIgnoring full path (exclusion list): <b>$altUrl : $dirOriginal</b>",'warning');
                                     $exclude=true;
                                 }
 
                                 if (!$exclude) {
                                     if ($nsp=="") {
-                                        $this->addLog("Adding Full (empty namespace): $altUrl=$full");
+                                        $this->addLog("Adding Full map (empty namespace): <b>$altUrl : $full</b> to class <i>$cs</i>");
                                         $nsAlt[$altUrl] = $full;
                                         $pathAbsolute[$altUrl]=$filesAbsolute[$key];
                                     } else {
                                         if (isset($ns[$nsp])) {
-                                            $this->addLog("\tFolder already used: $nsp=$dir",'warning');
+                                            $this->addLog("\tReusing the folder: <b>$nsp : $dir</b> to class <i>$cs</i>",'success');
                                         } else {
                                             $ns[$nsp] = $dir;
                                             $pathAbsolute[$nsp]=$filesAbsolute[$key];
-                                            $this->addLog("Adding Folder: $nsp=$dir");
+                                            $this->addLog("Adding Folder as namespace: <b>$nsp : $dir</b> to class <i>$cs</i>");
                                         }
                                     }
                                 }
@@ -688,14 +712,14 @@ EOD;
                                 // b) if namespace is already defined for a different folder.
                                 // c) multiple namespaces
                                 if (isset($nsAlt[$altUrl])) {
-                                    $this->addLog("\tError Conflict:Class with name $altUrl is already defined.",'error');
+                                    $this->addLog("\tError Conflict:Class with name <b>$altUrl</b> is already defined.",'error');
                                     $this->statConflict++;
                                     if ($this->stop) {
                                         die(1);
                                     }
                                 } else {
                                     if ((!in_array($altUrl, $this->excludeNSArr) || $nsp=="") && !$this->inExclusion($urlFull, $this->excludePathArr)) {
-                                        $this->addLog("Adding Full: $altUrl=$full");
+                                        $this->addLog("Adding Full: <b>$altUrl : $full</b> to class <i>$cs</i>");
                                         $nsAlt[$altUrl] = $full;
                                         $pathAbsolute[$altUrl]=$filesAbsolute[$key];
                                     }
@@ -705,21 +729,70 @@ EOD;
                     }
                     if (count($pArr)==0) {
                         $this->statNumPHP++;
-                        $this->addLog("\tIgnoring $full. Reason: No class found on file.",'warning');
+                        if ($runMe=="@noautoload") {
+                            $this->addLog("\tIgnoring <b>$full.</b> Reason: <b>@noautoload</b> found",'warning');
+                        } else {
+                            $this->addLog("\tIgnoring <b>$full.</b> Reason: No class found on file.",'warning');
+                        }
+
                     }
+                }
+                foreach($autorunsFirst as $auto) {
+                    $this->addLog("Adding file <b>$auto.</b> Reason: <b>@autoload first</b> found");
+                }
+                foreach($autoruns as $auto) {
+                    $this->addLog("Adding file <b>$auto.</b> Reason: <b>@autoload</b> found");
                 }
                 $autoruns=array_merge($autorunsFirst,$autoruns);
                 $this->result = $this->genautoload($this->fileGen."/autoload".$this->extension, $ns, $nsAlt,$pathAbsolute,$autoruns);
             }
-            $this->addLog("Stat number of classes: ".$this->statNumClass,'info');
-            $this->addLog("Stat number of namespaces: ".count($this->statNameSpaces),'info');
-            $this->addLog("Stat number of PHP Files: ".$this->statNumPHP,'info');
-            $this->addLog("Stat number of PHP Autorun: ".count($autoruns),'info');
-            $this->addLog("Stat number of conflict: ".$this->statConflict,'info');
+            if ($this->statNumPHP===0) {
+                $p=100;
+            } else {
+                $p =round((count($ns) + count($nsAlt))*100 / $this->statNumPHP,2);
+            }
+            if ($this->statNumClass===0) {
+                $pc=100;
+            } else {
+                $pc =round((count($ns) + count($nsAlt))*100 / $this->statNumClass,2);
+            }
+            $this->addLog("Number of Classes: <b>".$this->statNumClass."</b>",'stat');
+            $this->addLog("Number of Namespaces: <b>".count($this->statNameSpaces)."</b>",'stat');
+            $this->addLog("Number of Maps: <b>".(count($ns) + count($nsAlt))."</b>",'stat');
+            $this->addLog("Number of PHP Files: <b>".$this->statNumPHP."</b>",'stat');
+            $this->addLog("Number of PHP Autorun: <b>".count($autoruns)."</b>",'stat');
+            $this->addLog("Number of conflicts: <b>".$this->statConflict."</b>",'stat');
+            if ($this->statError) {
+                $this->addLog("Number of errors: <b>".$this->statError."</b>",'staterror');
+            }
+
+            $this->addLog("Ratio map per file: <b>".$p."%  ".$this->evaluation($p)."</b> (less is better. 100% means one map/one file)",'statinfo');
+            $this->addLog("Ratio map per classes: <b>".$pc."% ".$this->evaluation($pc)."</b> (less is better. 100% means one map/one class)",'statinfo');
+            $this->addLog("Map size: <b>".round($this->statByteUsed/1024,1)." kbytes</b> (less is better, it's an estimate of the memory used by the map)",'statinfo');
 
         } else {
             $this->addLog("No folder specified");
         }
+    }
+    private function evaluation($percentage) {
+        switch (1==1) {
+            case $percentage===0:
+                return "How?";
+                break;
+            case $percentage<10:
+                return "Awesome";
+                break;
+            case $percentage<25:
+                return "Good";
+                break;
+            case $percentage<40:
+                return "Acceptable";
+                break;
+            case $percentage<80:
+                return "Bad.";
+                break;
+        }
+        return "BAAAAAD!";
     }
 
     /**
@@ -945,7 +1018,15 @@ LOGS;
                     <div class="col-sm-10">
                       <div class="form-control" style="height:150px; overflow-y: scroll;">{{log}}</div>
                     </div>
-                  </div>                  
+                  </div>    
+                  <div class="form-group" >
+                    <div class="col-sm-2">
+                      <label class="control-label">Statistic</label>
+                    </div>
+                    <div class="col-sm-10">
+                      <div class="form-control" style="height:220px; overflow-y: auto;">{{logstat}}</div>
+                    </div>
+                  </div>                                 
                   <div class="form-group" >
                     <div class="col-sm-2">
                       <label class="control-label">Result</label>
@@ -964,7 +1045,7 @@ LOGS;
                   </div>                  
                   <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10">
-                      <button type="submit" name="button" value="1" class="btn btn-default">Generate</button>
+                      <button type="submit" name="button" value="1" class="btn btn-primary">Generate</button>
                       &nbsp;&nbsp;&nbsp;
                       <button type="submit" name="button" value="logout" class="btn btn-default">Logout</button>
                     </div>
@@ -998,6 +1079,7 @@ TEM1;
                 $web=str_replace("{{stop}}",($this->stop)?"checked":"",$web);
 
                 $web=str_replace("{{log}}",$this->log,$web);
+                $web=str_replace("{{logstat}}",$this->logStat,$web);
                 $web=str_replace("{{version}}",$this::VERSION,$web);
                 $web=str_replace("{{result}}",$this->result,$web);
 

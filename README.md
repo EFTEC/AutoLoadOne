@@ -4,7 +4,7 @@ AutoloadOne is a program that generates an autoload class (Auto Include) for PHP
 
 [![Packagist](https://img.shields.io/packagist/v/eftec/autoloadone.svg)](https://packagist.org/packages/eftec/autoloadone)
 [![Maintenance](https://img.shields.io/maintenance/yes/2018.svg)]()
-[![php](https://img.shields.io/badge/php->5.4-green.svg)]()
+[![php](https://img.shields.io/badge/php->5.6-green.svg)]()
 [![php](https://img.shields.io/badge/php-7.x-green.svg)]()
 [![CocoaPods](https://img.shields.io/badge/docs-60%25-yellow.svg)]()
 
@@ -228,6 +228,7 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+* 1.9 2018-10-14 A small fix and some colors.
 * 1.8 2018-10-14 Added external path and some fixes. Now you could add a path without comma (it's added automatically) [WebUI] 
 * 1.7 2018-10-12 Some small fixes. Now by default, the system uses the caller's path instead of the AutoLoadOne.php path.
 * 1.6 2018-09-28 Added wildcard (*) to exclusion list (folders).

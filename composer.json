@@ -12,12 +12,11 @@
       "email": "jcastro@eftec.cl"
     }],
   "require": {
-    "php": ">=5.4",
     "ext-json": "*"
   },
   "extra": {
     "branch-alias": {
-      "dev-master": "1.8.0-dev"
+      "dev-master": "1.9.0-dev"
     }
   },
   "archive": {

@@ -39,11 +39,12 @@ echo '$c8=new \AnotherProject\Connection();<br>';
 // class without namespace
 $c9=new ClassWithoutNameSpace();
 echo '$c9=new ClassWithoutNameSpace();<br>';
-// class external
+// class external. It is loaded externally. Of course it will fail if you are not loading (the class is not supplied in this project)
+/*
 $ex=new \nsexternal\External();
 echo '$ex=new \nsexternal\External();<br>';
 $ex2=Collection::first(array());
-
+*/
 echo "Ok<br>";
 
 echo "<span style='color:red'>The next command should raise an error (we test if the file doesn't exist):<br></span>";
