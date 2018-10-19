@@ -14,14 +14,14 @@ if(!defined("_AUTOLOAD_SAVEPARAM"))  define("_AUTOLOAD_SAVEPARAM",true); // true
 /**
  * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
- * @version 1.9 2018-10-14
+ * @version 1.10 2018-10-18
  * @noautoload
  * @package eftec\AutoLoadOne
  *
  */
 class AutoLoadOne {
 
-    const VERSION="1.9";
+    const VERSION="1.10";
 
     var $rooturl="";
     var $fileGen="";
@@ -324,6 +324,10 @@ class _AUTOLOAD_
     {
         if (isset($this->_arrautoloadAbsolute[$key])) {
             $fullFile=$filename; // its an absolute path
+            if (strpos($fullFile,'../')===0) { // Or maybe, not, it's a remote-relative path.
+                $oldDir=getcwd();  // we copy the current url
+                chdir(__DIR__);
+            }
         } else {
             $fullFile=__DIR__."/".$filename; // its relative to this path
         }
@@ -332,6 +336,10 @@ class _AUTOLOAD_
                 throw  new Exception("AutoLoadOne Error: Loading file [".__DIR__."/".$filename."] for class [".basename($filename)."]");
             } else {
                 throw  new Exception("AutoLoadOne Error: No file found.");
+            }
+        } else {
+            if (isset($oldDir)) {
+                chdir($oldDir);
             }
         }
     }
@@ -660,8 +668,6 @@ EOD;
                         }
                     }
                     foreach ($pArr as $p) {
-
-
                         $nsp = $p['namespace'];
                         $cs = $p['classname'];
                         $this->statNameSpaces[$nsp]=1;
@@ -679,30 +685,30 @@ EOD;
                                 $exclude=false;
                                 if (in_array($nsp, $this->excludeNSArr) && $nsp!="") {
                                     //if ($this->inExclusion($nsp, $this->excludeNSArr) && $nsp!="") {
-                                    $this->addLog("\tIgnoring namespace (exclusion list): <b>$altUrl : $full</b>",'warning');
+                                    $this->addLog("\tIgnoring namespace (path specified in <b>Excluded NameSpace</b>): <b>$altUrl -> $full</b>",'warning');
                                     $exclude=true;
                                 }
                                 if ($this->inExclusion($dir, $this->excludePathArr)) {
-                                    $this->addLog("\tIgnoring relative path (exclusion list): <b>$altUrl : $dir</b>",'warning');
+                                    $this->addLog("\tIgnoring relative path (path specified in <b>Excluded Path</b>): <b>$altUrl -> $dir</b>",'warning');
                                     $exclude=true;
                                 }
                                 if ($this->inExclusion($dirOriginal, $this->excludePathArr)) {
-                                    $this->addLog("\tIgnoring full path (exclusion list): <b>$altUrl : $dirOriginal</b>",'warning');
+                                    $this->addLog("\tIgnoring full path (path specified in <b>Excluded Path</b>): <b>$altUrl -> $dirOriginal</b>",'warning');
                                     $exclude=true;
                                 }
 
                                 if (!$exclude) {
                                     if ($nsp=="") {
-                                        $this->addLog("Adding Full map (empty namespace): <b>$altUrl : $full</b> to class <i>$cs</i>");
+                                        $this->addLog("Adding Full map (empty namespace): <b>$altUrl -> $full</b> to class <i>$cs</i>");
                                         $nsAlt[$altUrl] = $full;
                                         $pathAbsolute[$altUrl]=$filesAbsolute[$key];
                                     } else {
                                         if (isset($ns[$nsp])) {
-                                            $this->addLog("\tReusing the folder: <b>$nsp : $dir</b> to class <i>$cs</i>",'success');
+                                            $this->addLog("\tReusing the folder: <b>$nsp -> $dir</b> to class <i>$cs</i>",'success');
                                         } else {
                                             $ns[$nsp] = $dir;
                                             $pathAbsolute[$nsp]=$filesAbsolute[$key];
-                                            $this->addLog("Adding Folder as namespace: <b>$nsp : $dir</b> to class <i>$cs</i>");
+                                            $this->addLog("Adding Folder as namespace: <b>$nsp -> $dir</b> to class <i>$cs</i>");
                                         }
                                     }
                                 }
@@ -712,14 +718,14 @@ EOD;
                                 // b) if namespace is already defined for a different folder.
                                 // c) multiple namespaces
                                 if (isset($nsAlt[$altUrl])) {
-                                    $this->addLog("\tError Conflict:Class with name <b>$altUrl</b> is already defined.",'error');
+                                    $this->addLog("\tError Conflict:Class with name <b>$altUrl -> $dir</b> is already defined.",'error');
                                     $this->statConflict++;
                                     if ($this->stop) {
                                         die(1);
                                     }
                                 } else {
                                     if ((!in_array($altUrl, $this->excludeNSArr) || $nsp=="") && !$this->inExclusion($urlFull, $this->excludePathArr)) {
-                                        $this->addLog("Adding Full: <b>$altUrl : $full</b> to class <i>$cs</i>");
+                                        $this->addLog("Adding Full: <b>$altUrl -> $full</b> to class <i>$cs</i>");
                                         $nsAlt[$altUrl] = $full;
                                         $pathAbsolute[$altUrl]=$filesAbsolute[$key];
                                     }
@@ -730,18 +736,18 @@ EOD;
                     if (count($pArr)==0) {
                         $this->statNumPHP++;
                         if ($runMe=="@noautoload") {
-                            $this->addLog("\tIgnoring <b>$full.</b> Reason: <b>@noautoload</b> found",'warning');
+                            $this->addLog("\tIgnoring <b>$full</b> Reason: <b>@noautoload</b> found",'warning');
                         } else {
-                            $this->addLog("\tIgnoring <b>$full.</b> Reason: No class found on file.",'warning');
+                            $this->addLog("\tIgnoring <b>$full</b> Reason: No class found on file.",'warning');
                         }
 
                     }
                 }
                 foreach($autorunsFirst as $auto) {
-                    $this->addLog("Adding file <b>$auto.</b> Reason: <b>@autoload first</b> found");
+                    $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload first</b> found");
                 }
                 foreach($autoruns as $auto) {
-                    $this->addLog("Adding file <b>$auto.</b> Reason: <b>@autoload</b> found");
+                    $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload</b> found");
                 }
                 $autoruns=array_merge($autorunsFirst,$autoruns);
                 $this->result = $this->genautoload($this->fileGen."/autoload".$this->extension, $ns, $nsAlt,$pathAbsolute,$autoruns);
@@ -986,7 +992,8 @@ LOGS;
                     </div>
                     <div class="col-sm-10">
                       <textarea class="form-control" rows="5" name="excludeNS">{{excludeNS}}</textarea>
-                      <em>Namespaces without trailing "/" separated by comma or a new line. Example
+                      <em>Namespaces without trailing "/" separated by comma or a new line. It includes local and external folders.                      
+                        <br>Example
                       /mynamespace,/mynamespace2</em></div>
                   </div>
                   <div class="form-group">
@@ -995,11 +1002,12 @@ LOGS;
                     </div>
                     <div class="col-sm-10">
                       <textarea class="form-control" rows="5" name="excludePath">{{excludePath}}</textarea>
-                      <em>Relative path without trailing "/" separated by comma or a new line. Example
+                      <em>Relative path without trailing "/" separated by comma or a new line. 
+                       <br>Example
                       vendor/pchart/class</em><br>
                       <em>You could also use wildcards :<br>
-                       /path/* for any folder that starts with "/path/*"<br>
-                       */path/ for any folder that ends with "*/path/"</em></div>
+                       /path* for any folder that starts with "/path*,"path/folder".."<br>
+                       */path for any folder that ends with "*/path"</em></div>
                   </div>
 
                   <div class="form-group">

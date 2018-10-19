@@ -223,7 +223,7 @@ In the log file:
 * * :file_folder: model (_namespace_model\\_)
 * * * :page_with_curl: MyClass.php _namespace_model\\MyClass_
 * * * :page_with_curl: MyClass2.php _namespace_model\\MyClass2_
-* You could remove (:scissors:) namespaces and folders that you don't need it. Some namespaces and folders are used by the system however, they don't require to be autoloaded because they are loaded manually (for example, most libraries do that)
+* You could remove (:scissors:) namespaces and folders that you don't need it. Some namespaces and folders are used by the system however, they don't require to be autoloaded because they are loaded manually (for example, most libraries load it's own include manually)
 * * :file_folder: somelibrary 
 * * * :page_with_curl: MainLibraryClass.php 
 * * * :page_with_curl: IncludesLibrary.php :scissors:
@@ -237,16 +237,21 @@ class Someclass {
 
 }
 ```
-* Files with the extension **.php** (or the defined extension) are loaded. So, Files **.inc**, **.phpinclude** or similar, are automatically excluded (:scissors:).
 * * :file_folder: somelibrary 
-* * * :page_with_curl: file.inc.php (is included)
+* * * :page_with_curl: MainLibraryClass.php 
+* * * :page_with_curl: IncludesLibrary.php **@noautoload** :scissors:
+* Only files with the extension **.php** (or the defined extension) are loaded. So, Files **.inc**, **.phpinclude** or similar, are automatically excluded (:scissors:).
+* * :file_folder: somelibrary 
+* * * :page_with_curl: file.inc.php (inc.php is included but .inc)
 * * * :page_with_curl: IncludesLibrary.inc :scissors:
 * * * :page_with_curl: MoreIncludesLibrary.inc :scissors:
-* Another optimization is to use **many classes in the same file**. This library even allows to use multi classes / multi namespaces in the same file. So, it's possible to create a bulk version of a project.
+* Another optimization is to write **many classes in the same file**. This library even allows to use multi classes / multi namespaces in the same file. So, it's possible to create a bulk version of a project.
 * * :page_with_curl: AllClassesOneFile.php 
-* * * :pencil2: _repositoryns\\MyClass_
-* * * :pencil2: _repositoryns\\MyClass3_
-* * * :pencil2: _anotherns\\MyClass2_
+* * * namespace _repositoryns\\_
+* * * * class _repositoryns\\MyClass_
+* * * * class _repositoryns\\MyClass3_
+* * * namespace _anotherns\\MyClass2_
+* * * * class _anotherns\\MyClass2_
 
 
 ## Benchmark
@@ -291,6 +296,7 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+* 1.10 2018-10-18 It solves a small bug when we load autoload.php from a different url and it calls a external and remote folder.
 * 1.9 2018-10-14 A small fix and some colors.
 * 1.8 2018-10-14 Added external path and some fixes. Now you could add a path without comma (it's added automatically) [WebUI] 
 * 1.7 2018-10-12 Some small fixes. Now by default, the system uses the caller's path instead of the AutoLoadOne.php path.
