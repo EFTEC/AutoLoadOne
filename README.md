@@ -3,7 +3,8 @@
 AutoloadOne is a program that generates an autoload class (Auto Include) for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.   It is a direct alternative to Composer's autoload, but it works differently.   Composer's autoload, scans the folders during runtime, while this library only scans the folder once and it stores the result.
 
 [![Packagist](https://img.shields.io/packagist/v/eftec/autoloadone.svg)](https://packagist.org/packages/eftec/autoloadone)
-[![Maintenance](https://img.shields.io/maintenance/yes/2018.svg)]()
+[![Maintenance](https://img.shields.io/maintenance/yes/2019.svg)]()
+[![composer](https://img.shields.io/badge/composer-%3E1.8-blue.svg)]()
 [![php](https://img.shields.io/badge/php->5.6-green.svg)]()
 [![php](https://img.shields.io/badge/php-7.x-green.svg)]()
 [![CocoaPods](https://img.shields.io/badge/docs-60%25-yellow.svg)]()
