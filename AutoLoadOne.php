@@ -21,11 +21,12 @@ if(!defined("_AUTOLOAD_SAVEPARAM"))  define("_AUTOLOAD_SAVEPARAM",true); // true
  */
 class AutoLoadOne {
 
-    const VERSION="1.10";
+    const VERSION="1.11";
 
     var $rooturl="";
     var $fileGen="";
     var $savefile=1;
+	var $savefileName="autoload.php";
     var $stop=0;
     var $button=0;
     var $excludeNS="";
@@ -69,7 +70,9 @@ class AutoLoadOne {
     private function getAllParametersCli() {
         $this->rooturl=$this->fixSeparator($this->getParameterCli("folder"));
         $this->fileGen=$this->fixSeparator($this->getParameterCli("filegen"));
+        $this->fileGen=($this->fileGen==".")?$this->rooturl:$this->fileGen;
         $this->savefile=$this->getParameterCli("save");
+	    $this->savefileName=$this->getParameterCli("savefilename","autoload.php");
         $this->stop=$this->getParameterCli("stop");
         $this->current=$this->getParameterCli("current",true);
         $this->excludeNS=$this->getParameterCli("excludens");
@@ -118,6 +121,7 @@ eot;
             echo "-folder (folder to scan)\n";
             echo "-filegen (folder where autoload".$this->extension." will be generate)\n";
             echo "-save (save the file to generate)\n";
+	        echo "-savefilename (the filename to be generated. By default its autoload.php)\n";
             echo "-excludens (namespace excluded)\n";
             echo "-excludepath (path excluded)\n";
             echo "-externalpath (external paths)\n";
@@ -131,6 +135,7 @@ eot;
             $this->rooturl=getcwd();
             $this->fileGen=getcwd();
             $this->savefile=1;
+	        $this->savefileName="autoload.php";
             $this->stop=0;
             $this->button=1;
             $this->excludeNS="";
@@ -141,6 +146,7 @@ eot;
         echo "-folder ".$this->rooturl." (folder to scan)\n";
         echo "-filegen ".$this->fileGen." (folder where autoload".$this->extension." will be generate)\n";
         echo "-save ".($this->savefile?"yes":"no")." (save filegen)\n";
+	    echo "-savefilename ".$this->savefileName." (save filegen name)\n";
         echo "-excludens ".$this->excludeNS." (namespace excluded)\n";
         echo "-excludepath ".$this->excludePath." (path excluded)\n";
         echo "-externalpath ".$this->externalPath." (path external)\n";
@@ -156,6 +162,7 @@ eot;
         $param['rooturl']=$this->rooturl;
         $param['fileGen']=$this->fileGen;
         $param['savefile']=$this->savefile;
+	    $param['savefileName']=$this->savefileName;
         $param['excludeNS']=$this->excludeNS;
         $param['excludePath']=$this->excludePath;
         $param['externalPath']=$this->externalPath;
@@ -171,7 +178,9 @@ eot;
         if ($txt===false)  return false;
         $param=json_decode($txt,true);
         $this->fileGen=@$param['fileGen'];
+	    $this->fileGen=($this->fileGen==".")?$this->rooturl:$this->fileGen;
         $this->savefile=@$param['savefile'];
+	    $this->savefileName=@$param['savefileName'];
         $this->excludeNS=@$param['excludeNS'];
         $this->excludePath=@$param['excludePath'];
         $this->externalPath=@$param['externalPath'];
@@ -206,6 +215,7 @@ eot;
                 $this->debugMode=isset($_GET['debug'])?true:false;
                 $this->rooturl=$this->removeTrailSlash(@$_POST["rooturl"]?$_POST["rooturl"]:$this->rooturl);
                 $this->fileGen=$this->removeTrailSlash(@$_POST["fileGen"]?$_POST["fileGen"]:$this->fileGen);
+	            $this->fileGen=($this->fileGen==".")?$this->rooturl:$this->fileGen;
                 $this->excludeNS=$this->cleanInputFolder(
                     $this->removeTrailSlash(@$_POST["excludeNS"]?$_POST["excludeNS"]:$this->excludeNS
                     ));
@@ -216,6 +226,7 @@ eot;
                     $this->removeTrailSlash(@$_POST["externalPath"]?$_POST["externalPath"]:$this->externalPath
                     ));
                 $this->savefile=(@$_POST["savefile"])?@$_POST["savefile"]:$this->savefile;
+	            $this->savefileName=(@$_POST["savefileName"])?@$_POST["savefileName"]:$this->savefileName;
                 $this->stop=@$_POST["stop"];
                 $ok=$this->saveParam();
                 if ($ok===false) {
@@ -352,6 +363,7 @@ if (defined('_AUTOLOAD_ONEDEBUG')) {
 spl_AUTOLOAD_register(function ($class_name)
 {
     global $_AUTOLOAD_;
+    /** @var $_AUTOLOAD_ _AUTOLOAD_ */    
     $_AUTOLOAD_->auto($class_name);
 });
 // autorun
@@ -453,7 +465,11 @@ EOD;
         $runMe='';
         $r=array();
         try {
-            $content = file_get_contents($this->fixRelative($filename));
+        	if (is_file($this->fixRelative($filename))) {
+		        $content = file_get_contents($this->fixRelative($filename));
+	        } else {
+        		return [];
+	        }
             if ($this->debugMode) {
                 echo $filename . " trying token...<br>";
             }
@@ -483,6 +499,10 @@ EOD;
         }
         $nameSpace="";
         $className="";
+        /*echo "<pre>";
+        var_dump($tokens);
+	    echo "</pre>";
+        */
         foreach($tokens as $p=>$token) {
             if (is_array($token) && $token[0]==T_NAMESPACE) {
                 // We found a namespace
@@ -497,9 +517,22 @@ EOD;
                 }
                 $nameSpace=$ns;
             }
-            // A class is defined by a T_CLASS + an space + name of the class.
-            if (is_array($token) && ($token[0]==T_CLASS || $token[0]==T_INTERFACE || $token[0]==T_TRAIT)
-                && is_array($tokens[$p+1]) && $tokens[$p+1][0]==T_WHITESPACE   ) {
+            
+            $isClass=false;
+	        // A class is defined by a T_CLASS + an space + name of the class.
+            if (is_array($token) && ($token[0]==T_CLASS
+		            || $token[0]==T_INTERFACE
+		            || $token[0]==T_TRAIT)
+	            && is_array($tokens[$p+1]) && $tokens[$p+1][0]==T_WHITESPACE) {
+            	$isClass=true;
+            	if (is_array($tokens[$p-1]) && $tokens[$p-1][0]==T_PAAMAYIM_NEKUDOTAYIM && $tokens[$p-1][1]=='::') {
+            		// /namespace/Nameclass:class <-- we skip this case.
+            		$isClass=false;
+	            }
+            }
+            
+            
+            if ($isClass) {
 
                 // encontramos una clase
                 $min=min($p+30,count($tokens)-1);
@@ -523,12 +556,18 @@ EOD;
             //$min=min(strlen($path),strlen($this->baseGen));
             $min=min($min1,$min2);
             $baseCommon=$min;
+
             for($i=0;$i<$min;$i++) {
                 if (substr($path,0,$i)!=substr($this->baseGen,0,$i)) {
                     $baseCommon=$i-2;
                     break;
                 }
             }
+	        /*if (substr($path,1,2)==':/') {
+	        	// windows style c:/somefolder
+		        $baseCommon=0;
+	        }
+	        */
             // moving down the relative path (/../../)
             $c=substr_count(substr($this->baseGen,$baseCommon),"/");
             $r=str_repeat("/..",$c);
@@ -593,11 +632,24 @@ EOD;
         }
     }
 
+	/**
+	 * returns the name of the filename if the original filename constains .php then it is not added, otherwise
+	 * it is added.
+	 * @return string
+	 */
+    function getFileName() {
+    	if (strpos($this->savefileName,'.php')===false) {
+    		return $this->savefileName.$this->extension;
+	    } else {
+    		return $this->savefileName;
+	    }
+    }
+
     function process() {
         $this->rooturl=$this->fixSeparator($this->rooturl);
         $this->fileGen=$this->fixSeparator($this->fileGen);
         if ($this->rooturl) {
-            $this->baseGen=$this->dirNameLinux($this->fileGen."/autoload".$this->extension);
+            $this->baseGen=$this->dirNameLinux($this->fileGen."/".$this->getFileName());
             $files = $this->listFolderFiles($this->rooturl);
             $filesAbsolute=array_fill(0,count($files),false);
 
@@ -616,15 +668,11 @@ EOD;
             $pathAbsolute=array();
             $autoruns=array();
             $autorunsFirst=array();
-            $this->excludeNSArr = str_replace("\n", "", $this->excludeNS);
-            $this->excludeNSArr = str_replace("\r", "", $this->excludeNSArr);
-            $this->excludeNSArr = str_replace(" ", "", $this->excludeNSArr);
+            $this->excludeNSArr = str_replace(["\n","\r"," "], "", $this->excludeNS);
             $this->excludeNSArr = explode(",", $this->excludeNSArr);
 
-            $this->excludePathArr = str_replace("\n", "", $this->excludePath);
-            $this->excludePathArr = $this->fixSeparator( $this->excludePath);
-            $this->excludePathArr = str_replace("\r", "", $this->excludePathArr);
-            $this->excludePathArr = str_replace(" ", "", $this->excludePathArr);
+	        $this->excludePathArr = $this->fixSeparator( $this->excludePath);
+            $this->excludePathArr = str_replace(["\n","\r"], "", $this->excludePath);
             $this->excludePathArr = explode(",", $this->excludePathArr);
             foreach($this->excludePathArr as &$item) {
                 $item=trim($item);
@@ -718,13 +766,14 @@ EOD;
                                 // b) if namespace is already defined for a different folder.
                                 // c) multiple namespaces
                                 if (isset($nsAlt[$altUrl])) {
-                                    $this->addLog("\tError Conflict:Class with name <b>$altUrl -> $dir</b> is already defined.",'error');
+                                    $this->addLog("\tError Conflict:Class with name <b>$altUrl -> $dir</b> is already defined. File $f",'error');
                                     $this->statConflict++;
                                     if ($this->stop) {
                                         die(1);
                                     }
                                 } else {
-                                    if ((!in_array($altUrl, $this->excludeNSArr) || $nsp=="") && !$this->inExclusion($urlFull, $this->excludePathArr)) {
+                                    if ((!in_array($altUrl, $this->excludeNSArr) || $nsp=="")
+	                                        && !$this->inExclusion($urlFull, $this->excludePathArr)) {
                                         $this->addLog("Adding Full: <b>$altUrl -> $full</b> to class <i>$cs</i>");
                                         $nsAlt[$altUrl] = $full;
                                         $pathAbsolute[$altUrl]=$filesAbsolute[$key];
@@ -750,7 +799,7 @@ EOD;
                     $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload</b> found");
                 }
                 $autoruns=array_merge($autorunsFirst,$autoruns);
-                $this->result = $this->genautoload($this->fileGen."/autoload".$this->extension, $ns, $nsAlt,$pathAbsolute,$autoruns);
+                $this->result = $this->genautoload($this->fileGen."/".$this->getFileName(), $ns, $nsAlt,$pathAbsolute,$autoruns);
             }
             if ($this->statNumPHP===0) {
                 $p=100;
@@ -764,7 +813,7 @@ EOD;
             }
             $this->addLog("Number of Classes: <b>".$this->statNumClass."</b>",'stat');
             $this->addLog("Number of Namespaces: <b>".count($this->statNameSpaces)."</b>",'stat');
-            $this->addLog("Number of Maps: <b>".(count($ns) + count($nsAlt))."</b>",'stat');
+            $this->addLog("<b>Number of Maps:</b> <b>".(count($ns) + count($nsAlt))."</b> (you want to reduce it)",'stat');
             $this->addLog("Number of PHP Files: <b>".$this->statNumPHP."</b>",'stat');
             $this->addLog("Number of PHP Autorun: <b>".count($autoruns)."</b>",'stat');
             $this->addLog("Number of conflicts: <b>".$this->statConflict."</b>",'stat');
@@ -941,7 +990,9 @@ LOGS;
                     <div class="col-sm-10">
                       <input type="text" class="form-control" placeholder="ex. \htdoc\web  or c:\htdoc\web"
                       name="rooturl" value="{{rooturl}}">
-                      <em>Root folder to scan. Extension: <b>{{extension}}</b></em><br>
+                      <em><b>Examples:</b> Absolute paths: c:\root\folder, c:/root/folder, /root/folder</em>
+                      <em>Relative paths: folder/other, folder\other</em><br>
+                      <em>Extension scanned: <b>{{extension}}</b></em><br>
                       <em>PHP files that contain the comment <b>@noautoload</b> are ignored</em><br>
                       <em>PHP files that don't contain a class/interface are ignored. Its allowed to have multiple classes per file</em><br>
                       <em>PHP files that contain the comment <b>"@autorun"</b> are executed (even if they don't have a class)</em><br>
@@ -957,18 +1008,27 @@ LOGS;
                     <div class="col-sm-10">
                       <input type="text" class="form-control" placeholder="ex. /etc/httpd/web or c:\apache\htdoc"
                       name="fileGen" value="{{fileGen}}">
-                      <em>Full path (local file) where the autoload{{extension}} will be generated.<br>
+                      <em>Full/relative path (local file) where the autoload{{extension}} will be generated.<br>
                       Note: This path is also used to determine the relativity of the includes</em>
                     </div>
                   </div>
+    
                   <div class="form-group">
-                    <div class="col-sm-offset-2 col-sm-10">
+                    <div class="col-sm-2">
+                      <label class="control-label">Save .php file <span class="text-primary">(Optional)</span>
+                        <br>
+                      </label>
+                    </div>
+                    <div class="col-sm-10">                       
+                      <input type="text" class="form-control" placeholder="filename to generate"
+                      name="savefileName" value="{{savefileName}}">
                       <div class="checkbox">
                         <label>
                           <input type="checkbox" name="savefile" value="1" {{savefile}}>Save File</label>
-                      </div>
+                      </div>                      
+                      <em>The php file that will be generated. You could generate it manually (copy and paste the result)<br>
                     </div>
-                  </div>    
+                  </div>
                   <div class="form-group">
                     <div class="col-sm-2">
                       <label class="control-label">External Library <span class="text-primary">(Optional)</span>
@@ -1015,7 +1075,11 @@ LOGS;
                       <div class="checkbox">
                         <label>
                           <input type="checkbox" name="stop" value=1 {{stop}}>
-                          <em>Stop on conflict (class defined more than one time)</em></label>
+                          <em>Stop on conflict (class defined more than one time)</em><br>
+                          
+                          <em>A conflict is a class defined more than one time (same name and same namespace). It usually happens for classes defined for a test (or classes without a namespace)</em>
+                          </label>
+                          
                       </div>
                     </div>
                   </div>
@@ -1084,6 +1148,7 @@ TEM1;
                 $web=str_replace("{{externalPath}}",$this->externalPath,$web);
                 $web=str_replace("{{excludePath}}",$this->excludePath,$web);
                 $web=str_replace("{{savefile}}",($this->savefile)?"checked":"",$web);
+	            $web=str_replace("{{savefileName}}",$this->savefileName,$web);
                 $web=str_replace("{{stop}}",($this->stop)?"checked":"",$web);
 
                 $web=str_replace("{{log}}",$this->log,$web);

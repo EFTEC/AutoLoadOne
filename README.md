@@ -11,7 +11,7 @@ AutoloadOne is a program that generates an autoload class (Auto Include) for PHP
 
 
 
-Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate the autoload class, include and you are ready to load any class (even classes without a namespace, classes in the namespace in different folders, multiple classes defined in a single file...).  
+Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php (or the name indicated) file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate the autoload class, include and you are ready to load any class (even classes without a namespace, classes in the namespace in different folders, multiple classes defined in a single file...).  
 
 AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.  
 
@@ -24,9 +24,9 @@ AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use 
 :one:  
  Run AutoLoadOne.php as CLI or as Web.  
 :two:  
- AutoLoadOne will generate a single file called autoload.php based in your project. For the record, it takes mere 1.5 seconds to scan Wordpress and yes, it is compatible with Wordpress.  
+ AutoLoadOne will generate a single file called autoload.php (or the name indicated) based in your project. For the record, it takes mere 1.5 seconds to scan Wordpress and yes, it is compatible with Wordpress.  
 :three:  
- Include autoload.php in your project code and start using it.  
+ Include the generated file (ex: autoload.php) in your project code and start using it.  
 
 ## When i should re-run AutoLoadOne?
 
@@ -34,7 +34,7 @@ You don't need to run it again if you are adding a new class with the same names
 
 Also, you could edit autoload.php manually by adding more classes and namespaces.
 
-Or you could run AutoLoadOne.php again and replace the old autoload.php
+Or you could run AutoLoadOne.php again and replace the old generated file.
 
 ## Composer Autoload features:
 :black_square_button: One class per file  
@@ -56,8 +56,8 @@ Or you could run AutoLoadOne.php again and replace the old autoload.php
 :white_check_mark: Support CLI and Web-UI.  
 :white_check_mark: It doesn't require APCU, lock files or cache.  
 :white_check_mark: It´s compatible with practically any project, including a project that uses Composer's autoload.  
-:white_check_mark: PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.
-:white_check_mark: It allows libraries outside of the project folder.  
+:white_check_mark: PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.  
+:white_check_mark: It allows libraries outside of the project folder.  For example /someuser/myproject/ allows to include libraries from the folder /otheruser/library/
 
 ## Usage (generate code via Web)
 
@@ -110,7 +110,8 @@ Commands available :
 
 * current (scan and generates files from the current folder)  
 * folder (folder to scan)  
-* filegen (folder where autoload.php will be generate)  
+* filegen (folder where autoload.php will be generate)
+* filename (name of the filename to generate by default its autoload.php)  
 * save yes/no (save the file to generate).This option is required.
 * excludens (namespace excluded)  
 * excludepath (path excluded)  
@@ -126,7 +127,7 @@ php folder/located/autoloadone.php -current
 
 
 
-## Usage of the generated file autoload.php
+## Usage of the generated file (autoload.php)
 
 :one:  
 include the generated file by the previous step. ex: autoload.php
@@ -254,12 +255,171 @@ class Someclass {
 * * * namespace _anotherns\\MyClass2_
 * * * * class _anotherns\\MyClass2_
 
+## Test 
+
+I created a empty blog on Laravel. The project is empty but the default libraries and components.
+
+
+Files:
+
+    7545 files in total. (including files that aren't PHP files)
+    
+### AutoLoadOne
+
+    Number of Classes: 5565
+    Number of Namespaces: 765
+    Number of Maps: 2305 (you want to reduce it)
+    Number of PHP Files: 6302
+    Number of PHP Autorun: 0
+    Number of conflicts: 31
+
+File generated:   
+
+    autoload.php 231kb.
+    
+### Optimized AutoLoadOne 
+
+I separated PHPUnit and Mockery from the project. Why?. Both libraries are for unit test.
+
+excluded namespace = /vendor/phpunit/*,/vendor/mockery/*
+
+
+    Number of Classes: 5565
+    Number of Namespaces: 765
+    Number of Maps: 1535 (you want to reduce it)
+    Number of PHP Files: 6302
+    Number of PHP Autorun: 0
+    Number of conflicts: 13     
+
+File generated: 
+
+    autoload.php 159kb.    
+
+### Composer's autoload (using optimize)
+
+composer dump-autoload -o
+
+    Generated optimized autoload files containing 3519 classes
+    Number of Maps: 3519 (static and not-static)
+
+Autoload uses one of the next methods:
+
+* Static:  (fast method, it uses more memory and it requires to be calculated manually)
+
+  
+    autoload.php 1kb  
+    autoload_real.php 3kb  
+    autoload_static.php 468kb  
+    ClassLoader.php 14kb  
+
+
+* Not static: (default method)
+
+
+    autoload.php 1kb
+    autoload_real.php 3kb
+    autoload_namespaces.php 1kb
+    autoload_psr4.php 4kb
+    autoload_classmap.php 426kb    
+
+
+### Why the size matter?.
+
+Let's say we are calling a single webpage that uses autoload.
+
+If we use **Composer's autoload (static)**, we are also calling a file that uses **468kb** (plus other files), and this memory is loaded into the memory. It could use (an average of) **609kb of ram** per call (it's around PHP file x 1.3 x 1kb)
+ 
+For example, what if we have **1000 concurrent users**. It will use 609kb x 1000 = **609mb of ram** thanks to Autoload alone at the same time and with **10k concurrent users** we will use **6gb of ram** only because autoload.   
+
+
+With **AutoLoadOne**, it is optimized to **302mb** (1000 users) or 3gb (10k users), it is for the version not optimized.
+
+AutoLoadOne tags all classes from the project, including classes that aren't defined in composer.json (unless they are excluded from the project). **Composer's autoload found only 3519 classes, while AutoLoadOne found all classes of the project (5565).**
+
+However, some classes are not required to be loaded by the project (for example unit test classes), so we could exclude those classes of the project.
+
+For example, excluding PHPUnit and Mockery reduces the use to 206mb (1000 users) or 2gb (10k users) but **we could optimize it even further.**
+ 
+| Concurrent Users | Composer's autoload (Optimized) | AutoLoadOne | AutoLoadOne Optimized |
+|------------------|---------------------------------|-------------|-----------------------|
+| 1000             | 609mb                           | 301mb       | 206mb                 |
+| 10000            | 6gb                             | 3gb         | 2gb                   |
+
+
+### Lookup usage?
+
+Let's say we have a "map" with different elements. How much time does it takes to find the element of the map?.
+
+|Map size|Time (1 million of lookup sequentially)|
+|--------|----|
+|100     |0.271 seconds +/- |
+|10.000  |0.299 seconds  +/-  |
+|1.000.000|0.376 seconds  +/- |
+
+So, the size of the map/lookup time is not important. The difference between a small map (100 elements) versus a huge map (1 million of elements) is 0.1 second in total (per 1 millon of queries). However the memory usage matters and it could impact the performance considerably.
+
+#### How many lookup are called?.
+
+Let's say we have 10k concurrent users and each one calls 100 different classes. It means we are doing 10k x 100 = 1 million of lookup at the same time.
+
+## TEST II (Magento 2.x)
+
+Magento is a huge project, it has 22k PHP files and from it, 20k are classes.  However, it generates a map of 9.2k elements (without optimization)
+
+AutoLoadOne:
+
+    Number of Classes: 20596
+    Number of Namespaces: 6868
+    Number of Maps: 9242 (you want to reduce it)
+    Number of PHP Files: 22227
+    Number of PHP Autorun: 0
+    Number of conflicts: 6
+
+    File size 1.06mb
+
+It takes 38 seconds to generate the autoload.php 
+
+While using Composer's autoload (optimized)
+
+    Generated optimized autoload files containing 11329 classes
+    Number of Maps: 11329 (1.6mb file size)
+
+| Concurrent Users(*) | Composer's autoload (Optimized) | AutoLoadOne (not optimized) |
+|------------------|---------------------------------|-------------|
+| 1000             | 2.08gb                          | 1.37gb      |
+| 10000            | 20.8gb                          | 13.7gb      |    
+
+> (*) However, Magento wasn't create for concurrency. But, however what we are measuring is not the number of concurrent users but the number of concurrent calls (for example rest-json, opening a page and such).
+
+### Code execution.
+
+Both AutoLoadOne and Composer's autoload execute a code when it is initialized/executed.
+
+When AutoLoadOne generates the map, it consists of two relational arrays as follow:
+
+```php
+    private $_arrautoloadCustom = array(
+		'Magento\AdminNotification' => '/app/code/',
+		'Magento\Notice' => '/app/code/Developer/',...
+
+```
+
+While Composer's autoload generates an array that requires concatenation.
+
+```php
+array(
+    'Magento\\AdminNotification' => $baseDir . '/app/code/MagentoActions.php',
+    'Magento\\Notice' => $baseDir . '/app/code/Developer/Notice.php',
+```
+
+So it requires to concatenate each map (with a variable called $baseDir).  So Composer's autoload affects slighly the performance.
+
 
 ## Benchmark
 
 PHP 7.1.18 + Windows 10 + SSD.
 
-![autoloadone benchmark](https://github.com/EFTEC/AutoLoadOne/blob/master/doc/speed.jpg "Autoloadone benchmarj")  
+![AutoloadOne Benchmark](https://raw.githubusercontent.com/EFTEC/AutoLoadOne/master/doc/speed.jpg)  
 
 _More is better._
 
@@ -297,6 +457,7 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+* 1.11 2019-03-04 It allows to specify the result php file. And some cleanups.  Now, /namespace/nameclass:class is not considered a class
 * 1.10 2018-10-18 It solves a small bug when we load autoload.php from a different url and it calls a external and remote folder.
 * 1.9 2018-10-14 A small fix and some colors.
 * 1.8 2018-10-14 Added external path and some fixes. Now you could add a path without comma (it's added automatically) [WebUI] 
