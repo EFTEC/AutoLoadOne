@@ -22,6 +22,9 @@ if(!defined("_AUTOLOAD_SAVEPARAM"))  define("_AUTOLOAD_SAVEPARAM",true); // true
 class AutoLoadOne {
 
     const VERSION="1.11";
+    const JSON_UNESCAPED_SLASHES = 64;
+    const JSON_PRETTY_PRINT = 128;
+    const JSON_UNESCAPED_UNICODE = 256;
 
     var $rooturl="";
     var $fileGen="";
@@ -153,6 +156,159 @@ eot;
         echo "------------------------------------------------------------------\n";
     }
 
+    public static function encode($data, $options = 448)
+    {
+        if (PHP_VERSION_ID >= 50400) {
+            $json = json_encode($data, $options);
+            if (false === $json) {
+                self::throwEncodeError(json_last_error());
+            }
+
+
+            if (PHP_VERSION_ID < 50428 || (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 50512) || (defined('JSON_C_VERSION') && version_compare(phpversion('json'), '1.3.6', '<'))) {
+                $json = preg_replace('/\[\s+\]/', '[]', $json);
+                $json = preg_replace('/\{\s+\}/', '{}', $json);
+            }
+
+            return $json;
+        }
+
+        $json = json_encode($data);
+        if (false === $json) {
+            self::throwEncodeError(json_last_error());
+        }
+
+        $prettyPrint = (bool)($options & self::JSON_PRETTY_PRINT);
+        $unescapeUnicode = (bool)($options & self::JSON_UNESCAPED_UNICODE);
+        $unescapeSlashes = (bool)($options & self::JSON_UNESCAPED_SLASHES);
+
+        if (!$prettyPrint && !$unescapeUnicode && !$unescapeSlashes) {
+            return $json;
+        }
+
+        return self::format($json, $unescapeUnicode, $unescapeSlashes);
+    }
+
+    private static function throwEncodeError($code)
+    {
+        switch ($code) {
+            case JSON_ERROR_DEPTH:
+                $msg = 'Maximum stack depth exceeded';
+                break;
+            case JSON_ERROR_STATE_MISMATCH:
+                $msg = 'Underflow or the modes mismatch';
+                break;
+            case JSON_ERROR_CTRL_CHAR:
+                $msg = 'Unexpected control character found';
+                break;
+            case JSON_ERROR_UTF8:
+                $msg = 'Malformed UTF-8 characters, possibly incorrectly encoded';
+                break;
+            default:
+                $msg = 'Unknown error';
+        }
+
+        throw new \RuntimeException('JSON encoding failed: ' . $msg);
+    }
+
+    public static function format($json, $unescapeUnicode, $unescapeSlashes)
+    {
+        $result = '';
+        $pos = 0;
+        $strLen = strlen($json);
+        $indentStr = '    ';
+        $newLine = "\n";
+        $outOfQuotes = true;
+        $buffer = '';
+        $noescape = true;
+
+        for ($i = 0; $i < $strLen; $i++) {
+
+            $char = substr($json, $i, 1);
+
+
+            if ('"' === $char && $noescape) {
+                $outOfQuotes = !$outOfQuotes;
+            }
+
+            if (!$outOfQuotes) {
+                $buffer .= $char;
+                $noescape = '\\' === $char ? !$noescape : true;
+                continue;
+            } elseif ('' !== $buffer) {
+                if ($unescapeSlashes) {
+                    $buffer = str_replace('\\/', '/', $buffer);
+                }
+
+                if ($unescapeUnicode && function_exists('mb_convert_encoding')) {
+
+                    $buffer = preg_replace_callback('/(\\\\+)u([0-9a-f]{4})/i', function ($match) {
+                        $l = strlen($match[1]);
+
+                        if ($l % 2) {
+                            $code = hexdec($match[2]);
+
+
+                            if (0xD800 <= $code && 0xDFFF >= $code) {
+                                return $match[0];
+                            }
+
+                            return str_repeat('\\', $l - 1) . mb_convert_encoding(
+                                pack('H*', $match[2]),
+                                'UTF-8',
+                                'UCS-2BE'
+                            );
+                        }
+
+                        return $match[0];
+                    }, $buffer);
+                }
+
+                $result .= $buffer . $char;
+                $buffer = '';
+                continue;
+            }
+
+            if (':' === $char) {
+
+                $char .= ' ';
+            } elseif ('}' === $char || ']' === $char) {
+                $pos--;
+                $prevChar = substr($json, $i - 1, 1);
+
+                if ('{' !== $prevChar && '[' !== $prevChar) {
+
+
+                    $result .= $newLine;
+                    for ($j = 0; $j < $pos; $j++) {
+                        $result .= $indentStr;
+                    }
+                } else {
+
+                    $result = rtrim($result);
+                }
+            }
+
+            $result .= $char;
+
+
+
+            if (',' === $char || '{' === $char || '[' === $char) {
+                $result .= $newLine;
+
+                if ('{' === $char || '[' === $char) {
+                    $pos++;
+                }
+
+                for ($j = 0; $j < $pos; $j++) {
+                    $result .= $indentStr;
+                }
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * @return bool|int
      */
@@ -166,7 +322,32 @@ eot;
         $param['excludeNS']=$this->excludeNS;
         $param['excludePath']=$this->excludePath;
         $param['externalPath']=$this->externalPath;
-        return @file_put_contents($this->fileConfig,json_encode($param,JSON_PRETTY_PRINT));
+
+        $remote=[];
+        $remote['rooturl'] = '';
+        $remote['destination'] = $this->fileGen;
+        $remote['name'] = '';
+        $remoteint = '1';
+
+        $git=[];
+        $git['destination'] = $this->fileGen;
+        $git['name'] = 'biurad/hello-world 1.* --no-dev';
+        $gitint = '1';
+
+        $generatedvia = 'AutoloadOne';
+        $date = date("Y/m/d h:i");
+
+        return @file_put_contents(
+            $this->fileConfig,
+            $this->encode(
+                ['application' => $generatedvia, 
+                'generated' => $date, 
+                'local' => $param, 
+                'remote' => [$remoteint => $remote], 
+                'git' =>[$gitint => $git]
+                ]
+            )
+        );
     }
 
     /**
@@ -174,7 +355,7 @@ eot;
      */
     private function loadParam() {
         if (!_AUTOLOAD_SAVEPARAM) return false;
-        $txt=@file_get_contents($this->fileConfig);
+        $txt=@file_get_contents($this->fileConfig->local);
         if ($txt===false)  return false;
         $param=json_decode($txt,true);
         $this->fileGen=@$param['fileGen'];
@@ -904,7 +1085,7 @@ EOD;
     <title>AutoLoadOneGenerator Login Screen</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="http://raw.githubusercontent.com/EFTEC/AutoLoadOne/master/doc/favicon.ico">
-    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
+    <link rel="stylesheet" href="./bootstrap.min.css" />
 
   </head>
   
@@ -967,7 +1148,7 @@ LOGS;
     
     <link rel="shortcut icon" href="http://raw.githubusercontent.com/EFTEC/AutoLoadOne/master/doc/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1">    
-<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />    
+<link rel="stylesheet" href="./bootstrap.min.css"/>    
 </head>
       
   <body>
@@ -1198,13 +1379,3 @@ if (_AUTOLOAD_SELFRUN || php_sapi_name() == "cli") {
 /**
  * @noautoload
  */
-
-
-
-
-
-
-
-
-
-
