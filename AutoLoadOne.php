@@ -1,69 +1,56 @@
 <?php
-
 namespace eftec\AutoLoadOne;
-
 //*************************************************************
 use Exception;
 
-if (!defined('_AUTOLOAD_USER')) {
-    define('_AUTOLOAD_USER', 'autoloadone');
-} // user (web interface)
-if (!defined('_AUTOLOAD_PASSWORD')) {
-    define('_AUTOLOAD_PASSWORD', 'autoloadone');
-} // password (web interface)
-if (!defined('_AUTOLOAD_ENTER')) {
-    define('_AUTOLOAD_ENTER', true);
-} // if you want to auto login (skip user and password) then set to true
-if (!defined('_AUTOLOAD_SELFRUN')) {
-    define('_AUTOLOAD_SELFRUN', true);
-} // if you want to self run the class.
-if (!defined('_AUTOLOAD_ONLYCLI')) {
-    define('_AUTOLOAD_ONLYCLI', false);
-} // if you want to use only cli. If true, it disabled the web interface.
-if (!defined('_AUTOLOAD_SAVEPARAM')) {
-    define('_AUTOLOAD_SAVEPARAM', true);
-} // true if you want to save the parameters.
+if (!defined("_AUTOLOAD_USER")) define("_AUTOLOAD_USER", "autoloadone"); // user (web interface)
+if (!defined("_AUTOLOAD_PASSWORD")) define("_AUTOLOAD_PASSWORD", "autoloadone"); // password (web interface)
+if (!defined("_AUTOLOAD_ENTER"))  define("_AUTOLOAD_ENTER", true); // if you want to auto login (skip user and password) then set to true
+if (!defined("_AUTOLOAD_SELFRUN"))  define("_AUTOLOAD_SELFRUN", true); // if you want to self run the class.
+if (!defined("_AUTOLOAD_ONLYCLI"))  define("_AUTOLOAD_ONLYCLI", false); // if you want to use only cli. If true, it disabled the web interface.
+if (!defined("_AUTOLOAD_SAVEPARAM"))  define("_AUTOLOAD_SAVEPARAM", true); // true if you want to save the parameters.
 //*************************************************************
 @ini_set('max_execution_time', 300); // Limit of 5 minutes.
 /**
- * Class AutoLoadOne.
- *
+ * Class AutoLoadOne
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
- *
  * @version 1.10 2018-10-18
  * @noautoload
+ * @package eftec\AutoLoadOne
+ *
  */
 class AutoLoadOne
 {
-    const VERSION = '1.11';
+
+    const VERSION = "1.11";
     const JSON_UNESCAPED_SLASHES = 64;
     const JSON_PRETTY_PRINT = 128;
     const JSON_UNESCAPED_UNICODE = 256;
 
-    public $rooturl = '';
-    public $fileGen = '';
-    public $savefile = 1;
-    public $savefileName = 'autoload.php';
-    public $stop = 0;
-    public $button = 0;
-    public $excludeNS = '';
-    public $excludePath = '';
-    public $externalPath = '';
-    public $log = '';
-    public $logStat = '';
-    public $result = '';
-    public $cli = '';
-    public $logged = false;
-    public $current = '';
-    public $t1 = 0;
-    public $debugMode = false;
-    public $statNumClass = 0;
-    public $statNumPHP = 0;
-    public $statConflict = 0;
-    public $statError = 0;
-    public $statNameSpaces = [];
-    public $statByteUsed = 1024;
-    public $fileConfig = 'autoloadone.json';
+    var $rooturl = "";
+    var $fileGen = "";
+    var $savefile = 1;
+    var $savefileName = "autoload.php";
+    var $stop = 0;
+    var $button = 0;
+    var $excludeNS = "";
+    var $excludePath = "";
+    var $externalPath = "";
+    var $log = "";
+    var $logStat = "";
+    var $result = "";
+    var $cli = "";
+    var $logged = false;
+    var $current = "";
+    var $t1 = 0;
+    var $debugMode = false;
+    var $statNumClass = 0;
+    var $statNumPHP = 0;
+    var $statConflict = 0;
+    var $statError = 0;
+    var $statNameSpaces = array();
+    var $statByteUsed = 1024;
+    var $fileConfig = "autoloadone.json";
 
     public $extension = '.php';
 
@@ -80,46 +67,41 @@ class AutoLoadOne
         $this->rooturl = getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
         $this->t1 = microtime(true);
         $this->fileConfig = basename($_SERVER['SCRIPT_FILENAME']); // the config name shares the same name than the php but with extension .json
-        $this->fileConfig = getcwd().'/'.str_replace($this->extension, '.json', $this->fileConfig);
+        $this->fileConfig = getcwd() . '/' . str_replace($this->extension, '.json', $this->fileConfig);
         //var_dump($this->fileConfig);
-    }
 
+    }
     private function getAllParametersCli()
     {
-        $this->rooturl = $this->fixSeparator($this->getParameterCli('folder'));
-        $this->fileGen = $this->fixSeparator($this->getParameterCli('filegen'));
-        $this->fileGen = ($this->fileGen == '.') ? $this->rooturl : $this->fileGen;
-        $this->savefile = $this->getParameterCli('save');
-        $this->savefileName = $this->getParameterCli('savefilename', 'autoload.php');
-        $this->stop = $this->getParameterCli('stop');
-        $this->current = $this->getParameterCli('current', true);
-        $this->excludeNS = $this->getParameterCli('excludens');
-        $this->excludePath = $this->getParameterCli('excludepath');
-        $this->externalPath = $this->getParameterCli('externalpath');
-        $this->debugMode = $this->getParameterCli('debug');
+        $this->rooturl = $this->fixSeparator($this->getParameterCli("folder"));
+        $this->fileGen = $this->fixSeparator($this->getParameterCli("filegen"));
+        $this->fileGen = ($this->fileGen == ".") ? $this->rooturl : $this->fileGen;
+        $this->savefile = $this->getParameterCli("save");
+        $this->savefileName = $this->getParameterCli("savefilename", "autoload.php");
+        $this->stop = $this->getParameterCli("stop");
+        $this->current = $this->getParameterCli("current", true);
+        $this->excludeNS = $this->getParameterCli("excludens");
+        $this->excludePath = $this->getParameterCli("excludepath");
+        $this->externalPath = $this->getParameterCli("externalpath");
+        $this->debugMode = $this->getParameterCli("debug");
     }
 
     /**
      * @param $key
      * @param string $default is the defalut value is the parameter is set without value.
-     *
      * @return string
      */
     private function getParameterCli($key, $default = '')
     {
         global $argv;
-        $p = array_search('-'.$key, $argv);
-        if ($p === false) {
-            return '';
-        }
-        if ($default !== '') {
-            return $default;
-        }
+        $p = array_search("-" . $key, $argv);
+        if ($p === false) return "";
+        if ($default !== '') return $default;
         if (count($argv) >= $p + 1) {
+
             return $this->removeTrailSlash($argv[$p + 1]);
         }
-
-        return '';
+        return "";
     }
 
     private function removeTrailSlash($txt)
@@ -130,7 +112,7 @@ class AutoLoadOne
     private function initSapi()
     {
         global $argv;
-        $v = $this::VERSION.' (c) Jorge Castro';
+        $v = $this::VERSION . " (c) Jorge Castro";
         echo <<<eot
 
 
@@ -145,7 +127,7 @@ eot;
             // help
             echo "-current (scan and generates files from the current folder)\n";
             echo "-folder (folder to scan)\n";
-            echo '-filegen (folder where autoload'.$this->extension." will be generate)\n";
+            echo "-filegen (folder where autoload" . $this->extension . " will be generate)\n";
             echo "-save (save the file to generate)\n";
             echo "-savefilename (the filename to be generated. By default its autoload.php)\n";
             echo "-excludens (namespace excluded)\n";
@@ -154,28 +136,28 @@ eot;
             echo "------------------------------------------------------------------\n";
         } else {
             $this->getAllParametersCli();
-            $this->fileGen = ($this->fileGen == '') ? getcwd() : $this->fileGen;
+            $this->fileGen = ($this->fileGen == "") ? getcwd() : $this->fileGen;
             $this->button = 1;
         }
         if ($this->current) {
             $this->rooturl = getcwd();
             $this->fileGen = getcwd();
             $this->savefile = 1;
-            $this->savefileName = 'autoload.php';
+            $this->savefileName = "autoload.php";
             $this->stop = 0;
             $this->button = 1;
-            $this->excludeNS = '';
-            $this->externalPath = '';
-            $this->excludePath = '';
+            $this->excludeNS = "";
+            $this->externalPath = "";
+            $this->excludePath = "";
         }
 
-        echo '-folder '.$this->rooturl." (folder to scan)\n";
-        echo '-filegen '.$this->fileGen.' (folder where autoload'.$this->extension." will be generate)\n";
-        echo '-save '.($this->savefile ? 'yes' : 'no')." (save filegen)\n";
-        echo '-savefilename '.$this->savefileName." (save filegen name)\n";
-        echo '-excludens '.$this->excludeNS." (namespace excluded)\n";
-        echo '-excludepath '.$this->excludePath." (path excluded)\n";
-        echo '-externalpath '.$this->externalPath." (path external)\n";
+        echo "-folder " . $this->rooturl . " (folder to scan)\n";
+        echo "-filegen " . $this->fileGen . " (folder where autoload" . $this->extension . " will be generate)\n";
+        echo "-save " . ($this->savefile ? "yes" : "no") . " (save filegen)\n";
+        echo "-savefilename " . $this->savefileName . " (save filegen name)\n";
+        echo "-excludens " . $this->excludeNS . " (namespace excluded)\n";
+        echo "-excludepath " . $this->excludePath . " (path excluded)\n";
+        echo "-externalpath " . $this->externalPath . " (path external)\n";
         echo "------------------------------------------------------------------\n";
     }
 
@@ -186,6 +168,7 @@ eot;
             if (false === $json) {
                 self::throwEncodeError(json_last_error());
             }
+
 
             if (PHP_VERSION_ID < 50428 || (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 50512) || (defined('JSON_C_VERSION') && version_compare(phpversion('json'), '1.3.6', '<'))) {
                 $json = preg_replace('/\[\s+\]/', '[]', $json);
@@ -200,9 +183,9 @@ eot;
             self::throwEncodeError(json_last_error());
         }
 
-        $prettyPrint = (bool) ($options & self::JSON_PRETTY_PRINT);
-        $unescapeUnicode = (bool) ($options & self::JSON_UNESCAPED_UNICODE);
-        $unescapeSlashes = (bool) ($options & self::JSON_UNESCAPED_SLASHES);
+        $prettyPrint = (bool)($options & self::JSON_PRETTY_PRINT);
+        $unescapeUnicode = (bool)($options & self::JSON_UNESCAPED_UNICODE);
+        $unescapeSlashes = (bool)($options & self::JSON_UNESCAPED_SLASHES);
 
         if (!$prettyPrint && !$unescapeUnicode && !$unescapeSlashes) {
             return $json;
@@ -230,7 +213,7 @@ eot;
                 $msg = 'Unknown error';
         }
 
-        throw new \RuntimeException('JSON encoding failed: '.$msg);
+        throw new \RuntimeException('JSON encoding failed: ' . $msg);
     }
 
     public static function format($json, $unescapeUnicode, $unescapeSlashes)
@@ -245,7 +228,9 @@ eot;
         $noescape = true;
 
         for ($i = 0; $i < $strLen; $i++) {
+
             $char = substr($json, $i, 1);
+
 
             if ('"' === $char && $noescape) {
                 $outOfQuotes = !$outOfQuotes;
@@ -261,17 +246,19 @@ eot;
                 }
 
                 if ($unescapeUnicode && function_exists('mb_convert_encoding')) {
+
                     $buffer = preg_replace_callback('/(\\\\+)u([0-9a-f]{4})/i', function ($match) {
                         $l = strlen($match[1]);
 
                         if ($l % 2) {
                             $code = hexdec($match[2]);
 
+
                             if (0xD800 <= $code && 0xDFFF >= $code) {
                                 return $match[0];
                             }
 
-                            return str_repeat('\\', $l - 1).mb_convert_encoding(
+                            return str_repeat('\\', $l - 1) . mb_convert_encoding(
                                 pack('H*', $match[2]),
                                 'UTF-8',
                                 'UCS-2BE'
@@ -282,28 +269,34 @@ eot;
                     }, $buffer);
                 }
 
-                $result .= $buffer.$char;
+                $result .= $buffer . $char;
                 $buffer = '';
                 continue;
             }
 
             if (':' === $char) {
+
                 $char .= ' ';
             } elseif ('}' === $char || ']' === $char) {
                 $pos--;
                 $prevChar = substr($json, $i - 1, 1);
 
                 if ('{' !== $prevChar && '[' !== $prevChar) {
+
+
                     $result .= $newLine;
                     for ($j = 0; $j < $pos; $j++) {
                         $result .= $indentStr;
                     }
                 } else {
+
                     $result = rtrim($result);
                 }
             }
 
             $result .= $char;
+
+
 
             if (',' === $char || '{' === $char || '[' === $char) {
                 $result .= $newLine;
@@ -326,9 +319,7 @@ eot;
      */
     private function saveParam()
     {
-        if (!_AUTOLOAD_SAVEPARAM) {
-            return false;
-        }
+        if (!_AUTOLOAD_SAVEPARAM) return false;
         $param = [];
         $param['rooturl'] = $this->rooturl;
         $param['fileGen'] = $this->fileGen;
@@ -350,16 +341,17 @@ eot;
         $gitint = '1';
 
         $generatedvia = 'AutoloadOne';
-        $date = date('Y/m/d h:i');
+        $date = date("Y/m/d h:i");
 
         return @file_put_contents(
             $this->fileConfig,
             $this->encode(
-                ['application' => $generatedvia,
-                'generated'    => $date,
-                'local'        => $param,
-                'remote'       => [$remoteint => $remote],
-                'git'          => [$gitint => $git],
+                [
+                    'application' => $generatedvia,
+                    'generated' => $date,
+                    'local' => $param,
+                    'remote' => [$remoteint => $remote],
+                    'git' => [$gitint => $git]
                 ]
             )
         );
@@ -370,73 +362,74 @@ eot;
      */
     private function loadParam()
     {
-        if (!_AUTOLOAD_SAVEPARAM) {
-            return false;
-        }
+        if (!_AUTOLOAD_SAVEPARAM) return false;
         $txt = @file_get_contents($this->fileConfig->local);
-        if ($txt === false) {
-            return false;
-        }
+        if ($txt === false)  return false;
         $param = json_decode($txt, true);
         $this->fileGen = @$param['fileGen'];
-        $this->fileGen = ($this->fileGen == '.') ? $this->rooturl : $this->fileGen;
+        $this->fileGen = ($this->fileGen == ".") ? $this->rooturl : $this->fileGen;
         $this->savefile = @$param['savefile'];
         $this->savefileName = @$param['savefileName'];
         $this->excludeNS = @$param['excludeNS'];
         $this->excludePath = @$param['excludePath'];
         $this->externalPath = @$param['externalPath'];
-
         return true;
     }
-
     private function initWeb()
     {
         @ob_start();
         // Not in cli-mode
         @session_start();
-        $this->logged = @$_SESSION['log'];
+        $this->logged = @$_SESSION["log"];
         if (!$this->logged) {
-            $user = @$_POST['user'];
-            $password = @$_POST['password'];
+            $user = @$_POST["user"];
+            $password = @$_POST["password"];
             if (($user == _AUTOLOAD_USER && $password == _AUTOLOAD_PASSWORD) || _AUTOLOAD_ENTER) {
-                $_SESSION['log'] = '1';
+                $_SESSION["log"] = "1";
                 $this->logged = 1;
             } else {
                 sleep(1); // sleep a second
-                $_SESSION['log'] = '0';
+                $_SESSION["log"] = "0";
                 @session_destroy();
             }
             @session_write_close();
         } else {
-            $this->button = @$_POST['button'];
+
+            $this->button = @$_POST["button"];
             if (!$this->button) {
                 $loadOk = $this->loadParam();
                 if ($loadOk === false) {
-                    $this->addLog('Unable to load configuration file <b>'.$this->fileConfig.'</b>. It is not obligatory', 'warning');
+                    $this->addLog('Unable to load configuration file <b>' . $this->fileConfig . '</b>. It is not obligatory', 'warning');
                 }
             } else {
                 $this->debugMode = isset($_GET['debug']) ? true : false;
-                $this->rooturl = $this->removeTrailSlash(@$_POST['rooturl'] ? $_POST['rooturl'] : $this->rooturl);
-                $this->fileGen = $this->removeTrailSlash(@$_POST['fileGen'] ? $_POST['fileGen'] : $this->fileGen);
-                $this->fileGen = ($this->fileGen == '.') ? $this->rooturl : $this->fileGen;
+                $this->rooturl = $this->removeTrailSlash(@$_POST["rooturl"] ? $_POST["rooturl"] : $this->rooturl);
+                $this->fileGen = $this->removeTrailSlash(@$_POST["fileGen"] ? $_POST["fileGen"] : $this->fileGen);
+                $this->fileGen = ($this->fileGen == ".") ? $this->rooturl : $this->fileGen;
                 $this->excludeNS = $this->cleanInputFolder(
-                    $this->removeTrailSlash(@$_POST['excludeNS'] ? $_POST['excludeNS'] : $this->excludeNS
-                    ));
+                    $this->removeTrailSlash(
+                        @$_POST["excludeNS"] ? $_POST["excludeNS"] : $this->excludeNS
+                    )
+                );
                 $this->excludePath = $this->cleanInputFolder(
-                    $this->removeTrailSlash(@$_POST['excludePath'] ? $_POST['excludePath'] : $this->excludePath
-                    ));
+                    $this->removeTrailSlash(
+                        @$_POST["excludePath"] ? $_POST["excludePath"] : $this->excludePath
+                    )
+                );
                 $this->externalPath = $this->cleanInputFolder(
-                    $this->removeTrailSlash(@$_POST['externalPath'] ? $_POST['externalPath'] : $this->externalPath
-                    ));
-                $this->savefile = (@$_POST['savefile']) ? @$_POST['savefile'] : $this->savefile;
-                $this->savefileName = (@$_POST['savefileName']) ? @$_POST['savefileName'] : $this->savefileName;
-                $this->stop = @$_POST['stop'];
+                    $this->removeTrailSlash(
+                        @$_POST["externalPath"] ? $_POST["externalPath"] : $this->externalPath
+                    )
+                );
+                $this->savefile = (@$_POST["savefile"]) ? @$_POST["savefile"] : $this->savefile;
+                $this->savefileName = (@$_POST["savefileName"]) ? @$_POST["savefileName"] : $this->savefileName;
+                $this->stop = @$_POST["stop"];
                 $ok = $this->saveParam();
                 if ($ok === false) {
-                    $this->addLog('Unable to save configuration file <b>'.$this->fileConfig.'</b>. It is not obligatory.', 'warning');
+                    $this->addLog('Unable to save configuration file <b>' . $this->fileConfig . '</b>. It is not obligatory.', 'warning');
                 }
             }
-            if ($this->button == 'logout') {
+            if ($this->button == "logout") {
                 @session_destroy();
                 $this->logged = 0;
                 @session_write_close();
@@ -446,7 +439,6 @@ eot;
 
     /**
      * @param $value
-     *
      * @return string
      */
     private function cleanInputFolder($value)
@@ -454,28 +446,28 @@ eot;
         $v = str_replace("\r\n", "\n", $value); // remove windows line carriage
         $v = str_replace(",\n", "\n", $v); // remove previous ,\n if any and converted into \n. It avoids duplicate ,,\n
         $v = str_replace("\n", ",\n", $v); // we add ,\n again.
-        $v = str_replace('\\,', ',', $v); // we remove trailing \
-        $v = str_replace('/,', ',', $v); // we remove trailing /
+        $v = str_replace("\\,", ",", $v); // we remove trailing \
+        $v = str_replace("/,", ",", $v); // we remove trailing /
         return $v;
     }
 
-    public function init()
+    function init()
     {
-        $this->log = '';
-        $this->logStat = '';
+        $this->log = "";
+        $this->logStat = "";
 
-        if (php_sapi_name() == 'cli') {
+        if (php_sapi_name() == "cli") {
             $this->initSapi();
         } else {
             if (_AUTOLOAD_ONLYCLI) {
-                echo 'You should run it as a command line parameter.';
+                echo "You should run it as a command line parameter.";
                 die(1);
             }
             $this->initWeb();
         }
     }
 
-    public function genautoload($file, $namespaces, $namespacesAlt, $pathAbsolute, $autoruns)
+    function genautoload($file, $namespaces, $namespacesAlt, $pathAbsolute, $autoruns)
     {
         $template = <<<'EOD'
 <?php
@@ -486,129 +478,115 @@ eot;
  * @generated by AutoLoadOne {{version}} generated {{date}}
  * @copyright Copyright Jorge Castro C - MIT License. https://github.com/EFTEC/AutoLoadOne
  */
-class _AUTOLOAD_
-{
-    var $debug=false;
-    /* @var string[] Where $_arrautoloadCustom['namespace\Class']='folder\file.php' */
-    private $_arrautoloadCustom = array(
-{{custom}}
-    );
-    /* @var string[] Where $_arrautoload['namespace']='folder' */
-    private $_arrautoload = array(
-{{include}}
-    );
-    /* @var boolean[] Where $_arrautoload['namespace' or 'namespace\Class']=true if it's absolute (it uses the full path) */
-    private $_arrautoloadAbsolute= array(
-{{includeabsolute}}
-    );    
-    /**
-     * _AUTOLOAD_ constructor.
-     * @param bool $debug
-     */
-    public function __construct($debug=false)
-    {
-        $this->debug = $debug;
-    }
-    /**
-     * @param $class_name
-     * @throws Exception
-     */
-    public function auto($class_name) {
-        // its called only if the class is not loaded.
-        $ns = dirname($class_name); // without trailing
-        $ns=($ns==".")?"":$ns;        
-        $cls = basename($class_name);
-        // special cases
-        if (isset($this->_arrautoloadCustom[$class_name])) {
-            $this->loadIfExists($this->_arrautoloadCustom[$class_name],$class_name);
-            return;
-        }
-        // normal (folder) cases
-        if (isset($this->_arrautoload[$ns])) {
-            $this->loadIfExists($this->_arrautoload[$ns]."/".$cls."{{extension}}",$ns);
-            return;
-        }
-    }
+const {{tempname}}__debug = true;
 
-    /**
-     * We load the file.    
-     * @param string $filename
-     * @param string $key key of the class it could be the full class name or only the namespace
-     * @throws Exception
-     */
-    public function loadIfExists($filename,$key)
-    {
-        if (isset($this->_arrautoloadAbsolute[$key])) {
-            $fullFile=$filename; // its an absolute path
-            if (strpos($fullFile,'../')===0) { // Or maybe, not, it's a remote-relative path.
-                $oldDir=getcwd();  // we copy the current url
-                chdir(__DIR__);
-            }
-        } else {
-            $fullFile=__DIR__."/".$filename; // its relative to this path
+/* @var string[] Where $_arrautoloadCustom['namespace\Class']='folder\file.php' */
+const {{tempname}}__arrautoloadCustom = [
+{{custom}}
+];
+
+/* @var string[] Where $_arrautoload['namespace']='folder' */
+const {{tempname}}__arrautoload = [
+{{include}}
+];
+
+/* @var boolean[] Where $_arrautoload['namespace' or 'namespace\Class']=true if it's absolute (it uses the full path) */
+const {{tempname}}__arrautoloadAbsolute = [
+{{includeabsolute}} 
+];
+
+/**
+ * @param $class_name
+ * @throws Exception
+ */
+function {{tempname}}__auto($class_name)
+{
+    // its called only if the class is not loaded.
+    $ns = dirname($class_name); // without trailing
+    $ns = ($ns == '.') ? '' : $ns;
+    $cls = basename($class_name);
+    // special cases
+    if (isset({{tempname}}__arrautoloadCustom[$class_name])) {
+        {{tempname}}__loadIfExists({{tempname}}__arrautoloadCustom[$class_name], $class_name);
+        return;
+    }
+    // normal (folder) cases
+    if (isset({{tempname}}__arrautoload[$ns])) {
+        {{tempname}}__loadIfExists({{tempname}}__arrautoload[$ns] . '/' . $cls . '{{extension}}', $ns);
+        return;
+    }
+}
+
+/**
+ * We load the file.    
+ * @param string $filename
+ * @param string $key key of the class it could be the full class name or only the namespace
+ * @throws Exception
+ */
+function {{tempname}}__loadIfExists($filename, $key)
+{
+    if (isset({{tempname}}__arrautoloadAbsolute[$key])) {
+        $fullFile = $filename; // its an absolute path
+        if (strpos($fullFile, '../') === 0) { // Or maybe, not, it's a remote-relative path.
+            $oldDir = getcwd();  // we copy the current url
+            chdir(__DIR__);
         }
-        if((@include $fullFile) === false) {
-            if ($this->debug) {
-                throw  new Exception("AutoLoadOne Error: Loading file [".__DIR__."/".$filename."] for class [".basename($filename)."]");
-            } else {
-                throw  new Exception("AutoLoadOne Error: No file found.");
-            }
+    } else {
+        $fullFile = __DIR__ . "/" . $filename; // its relative to this path
+    }
+    if ((@include $fullFile) === false) {
+        if (s_debug) {
+            throw  new Exception("AutoLoadOne Error: Loading file [" . __DIR__ . "/" . $filename . "] for class [" . basename($filename) . "]");
         } else {
-            if (isset($oldDir)) {
-                chdir($oldDir);
-            }
+            throw  new Exception("AutoLoadOne Error: No file found.");
+        }
+    } else {
+        if (isset($oldDir)) {
+            chdir($oldDir);
         }
     }
-} // end of the class _AUTOLOAD_
-if (defined('_AUTOLOAD_ONEDEBUG')) {
-    $_AUTOLOAD_=new _AUTOLOAD_(_AUTOLOAD_ONEDEBUG);
-} else {
-    $_AUTOLOAD_=new _AUTOLOAD_(false);
 }
-spl_AUTOLOAD_register(function ($class_name)
-{
-    global $_AUTOLOAD_;
-    /** @var $_AUTOLOAD_ _AUTOLOAD_ */    
-    $_AUTOLOAD_->auto($class_name);
+
+spl_autoload_register(function ($class_name) {
+    {{tempname}}__auto($class_name);
 });
 // autorun
 {{autorun}}
 
 EOD;
-        $custom = '';
-        foreach ($namespacesAlt as $k=>$v) {
-            $custom .= "\t\t'$k' => '$v',\n";
+        $custom = "";
+        foreach ($namespacesAlt as $k => $v) {
+            $custom .= "\t'$k' => '$v',\n";
         }
-        if ($custom != '') {
+        if ($custom != "") {
             $custom = substr($custom, 0, -2);
         }
-        $include = '';
+        $include = "";
 
-        foreach ($namespaces as $k=>$v) {
-            $include .= "\t\t'$k' => '$v',\n";
+        foreach ($namespaces as $k => $v) {
+            $include .= "\t'$k' => '$v',\n";
         }
         $include = rtrim($include, ",\n");
-        $includeAbsolute = '';
-        foreach ($pathAbsolute as $k=> $v) {
-            if ($v) {
-                $includeAbsolute .= "\t\t'$k' => true,\n";
-            }
+        $includeAbsolute = "";
+        foreach ($pathAbsolute as $k => $v) {
+            if ($v)  $includeAbsolute .= "\t'$k' => true,\n";
         }
         $includeAbsolute = rtrim($includeAbsolute, ",\n");
-        $autorun = ''; //
-        foreach ($autoruns as $k=>$v) {
+        $autorun = ""; //
+        foreach ($autoruns as $k => $v) {
             $autorun .= "@include __DIR__.'$v';\n";
         }
         //
 
-        $template = str_replace('{{custom}}', $custom, $template);
-        $template = str_replace('{{include}}', $include, $template);
-        $template = str_replace('{{includeabsolute}}', $includeAbsolute, $template);
+        $template = str_replace("{{custom}}", $custom, $template);
+        $template = str_replace("{{include}}", $include, $template);
+        $template = str_replace("{{includeabsolute}}", $includeAbsolute, $template);
+        $template = str_replace("{{tempname}}", uniqid('s'), $template);
 
-        $template = str_replace('{{autorun}}', $autorun, $template);
-        $template = str_replace('{{version}}', $this::VERSION, $template);
-        $template = str_replace('{{extension}}', $this->extension, $template);
-        $template = str_replace('{{date}}', date('Y/m/d h:i:s'), $template);
+        $template = str_replace("{{autorun}}", $autorun, $template);
+        $template = str_replace("{{version}}", $this::VERSION, $template);
+        $template = str_replace("{{extension}}", $this->extension, $template);
+        $template = str_replace("{{date}}", date("Y/m/d h:i:s"), $template);
 
         // 1024 is the memory used by code, *1.3 is an overhead, usually it's mess.
         $this->statByteUsed = (strlen($include) + strlen($includeAbsolute) + strlen($custom)) * 1.3 + 1024;
@@ -620,77 +598,62 @@ EOD;
                 $this->addLog("Unable to write file <b>$file</b>. Check the folder and permissions. You could write it manually.", 'error');
                 $this->statError++;
             }
-            $this->addLog('&nbsp;');
+            $this->addLog("&nbsp;");
         }
-
         return $template;
     }
 
-    public function is_absolute_path($path)
+    function is_absolute_path($path)
     {
-        if ($path === null || $path === '') {
-            return false;
-        }
-
+        if ($path === null || $path === '') return false;
         return $path[0] === DIRECTORY_SEPARATOR || preg_match('~\A[A-Z]:(?![^/\\\\])~i', $path) > 0;
     }
-
-    public function listFolderFiles($dir)
+    function listFolderFiles($dir)
     {
-        $arr = [];
+        $arr = array();
         $this->listFolderFilesAlt($dir, $arr);
-
         return $arr;
     }
-
     private function fixRelative($path)
     {
         if (strpos($path, '..') !== false) {
-            return getcwd().'/'.$path;
+            return getcwd() . '/' . $path;
         } else {
             return $path;
         }
     }
-
-    public function listFolderFilesAlt($dir, &$list)
+    function listFolderFilesAlt($dir, &$list)
     {
-        if ($dir === '') {
-            return [];
-        }
+        if ($dir === "") return array();
         $ffs = @scandir($this->fixRelative($dir));
         if ($ffs === false) {
             $this->addLog("\nError: Unable to reader folder [$dir]. Check the name of the folder and the permissions", 'error');
             $this->statError++;
-
-            return [];
+            return array();
         }
         foreach ($ffs as $ff) {
             if ($ff != '.' && $ff != '..') {
                 if (strlen($ff) >= 5) {
                     if (substr($ff, -4) == $this->extension) {
-                        $list[] = $dir.'/'.$ff;
+                        $list[] = $dir . '/' . $ff;
                     }
                 }
-                if (is_dir($dir.'/'.$ff)) {
-                    $this->listFolderFilesAlt($dir.'/'.$ff, $list);
-                }
+                if (is_dir($dir . '/' . $ff))
+                    $this->listFolderFilesAlt($dir . '/' . $ff, $list);
             }
         }
-
         return $list;
     }
 
     /**
      * @param $filename
      * @param string $runMe
-     *
      * @return array
      */
-    public function parsePHPFile($filename, &$runMe)
+    function parsePHPFile($filename, &$runMe)
     {
         $runMe = '';
-        $r = [];
-
+        $r = array();
         try {
             if (is_file($this->fixRelative($filename))) {
                 $content = file_get_contents($this->fixRelative($filename));
@@ -698,25 +661,24 @@ EOD;
                 return [];
             }
             if ($this->debugMode) {
-                echo $filename.' trying token...<br>';
+                echo $filename . " trying token...<br>";
             }
             $tokens = token_get_all($content);
         } catch (Exception $ex) {
             echo "Error in $filename\n";
             die(1);
         }
-        foreach ($tokens as $p=>$token) {
+        foreach ($tokens as $p => $token) {
             if (is_array($token) && ($token[0] == T_COMMENT || $token[0] == T_DOC_COMMENT)) {
-                if (strpos($token[1], '@noautoload') !== false) {
-                    $runMe = '@noautoload';
-
-                    return [];
+                if (strpos($token[1], "@noautoload") !== false) {
+                    $runMe = "@noautoload";
+                    return array();
                 }
-                if (strpos($token[1], '@autorun') !== false) {
-                    if (strpos($token[1], '@autorunclass') !== false) {
+                if (strpos($token[1], "@autorun") !== false) {
+                    if (strpos($token[1], "@autorunclass") !== false) {
                         $runMe = '@autorunclass';
                     } else {
-                        if (strpos($token[1], '@autorun first') !== false) {
+                        if (strpos($token[1], "@autorun first") !== false) {
                             $runMe = '@autorun first';
                         } else {
                             $runMe = '@autorun';
@@ -725,16 +687,16 @@ EOD;
                 }
             }
         }
-        $nameSpace = '';
-        $className = '';
+        $nameSpace = "";
+        $className = "";
         /*echo "<pre>";
         var_dump($tokens);
-        echo "</pre>";
+	    echo "</pre>";
         */
-        foreach ($tokens as $p=>$token) {
+        foreach ($tokens as $p => $token) {
             if (is_array($token) && $token[0] == T_NAMESPACE) {
                 // We found a namespace
-                $ns = '';
+                $ns = "";
                 for ($i = $p + 2; $i < $p + 30; $i++) {
                     if (is_array($tokens[$i])) {
                         $ns .= $tokens[$i][1];
@@ -748,16 +710,19 @@ EOD;
 
             $isClass = false;
             // A class is defined by a T_CLASS + an space + name of the class.
-            if (is_array($token) && ($token[0] == T_CLASS
+            if (
+                is_array($token) && ($token[0] == T_CLASS
                     || $token[0] == T_INTERFACE
                     || $token[0] == T_TRAIT)
-                && is_array($tokens[$p + 1]) && $tokens[$p + 1][0] == T_WHITESPACE) {
+                && is_array($tokens[$p + 1]) && $tokens[$p + 1][0] == T_WHITESPACE
+            ) {
                 $isClass = true;
                 if (is_array($tokens[$p - 1]) && $tokens[$p - 1][0] == T_PAAMAYIM_NEKUDOTAYIM && $tokens[$p - 1][1] == '::') {
                     // /namespace/Nameclass:class <-- we skip this case.
                     $isClass = false;
                 }
             }
+
 
             if ($isClass) {
 
@@ -769,18 +734,17 @@ EOD;
                         break;
                     }
                 }
-                $r[] = ['namespace'=>trim($nameSpace), 'classname'=>trim($className)];
+                $r[] = array('namespace' => trim($nameSpace), 'classname' => trim($className));
             }
         } // foreach
         return $r;
     }
-
-    public function genPath($path)
+    function genPath($path)
     {
         $path = $this->fixSeparator($path);
         if (strpos($path, $this->baseGen) == 0) {
-            $min1 = strripos($path, '/');
-            $min2 = strripos($this->baseGen.'/', '/');
+            $min1 = strripos($path, "/");
+            $min2 = strripos($this->baseGen . "/", "/");
             //$min=min(strlen($path),strlen($this->baseGen));
             $min = min($min1, $min2);
             $baseCommon = $min;
@@ -792,50 +756,46 @@ EOD;
                 }
             }
             /*if (substr($path,1,2)==':/') {
-                // windows style c:/somefolder
-                $baseCommon=0;
-            }
-            */
+	        	// windows style c:/somefolder
+		        $baseCommon=0;
+	        }
+	        */
             // moving down the relative path (/../../)
-            $c = substr_count(substr($this->baseGen, $baseCommon), '/');
-            $r = str_repeat('/..', $c);
+            $c = substr_count(substr($this->baseGen, $baseCommon), "/");
+            $r = str_repeat("/..", $c);
             // moving up the relative path
             $r2 = substr($path, $baseCommon);
-
-            return $r.$r2;
+            return $r . $r2;
         } else {
             $r = substr($path, strlen($this->baseGen));
         }
-
         return $r;
     }
-
-    public function fixSeparator($fullUrl)
+    function fixSeparator($fullUrl)
     {
-        return str_replace('\\', '/', $fullUrl); // replace windows path for linux path.
+        return str_replace("\\", "/", $fullUrl); // replace windows path for linux path.
     }
 
     /**
-     * returns dir name linux way.
-     *
+     * returns dir name linux way
      * @param $url
      * @param bool $ifFullUrl
-     *
      * @return mixed|string
      */
-    public function dirNameLinux($url, $ifFullUrl = true)
+    function dirNameLinux($url, $ifFullUrl = true)
     {
         $url = trim($url);
         $dir = ($ifFullUrl) ? dirname($url) : $url;
         $dir = $this->fixSeparator($dir);
-        $dir = rtrim($dir, '/'); // remove trailing /
+        $dir = rtrim($dir, "/"); // remove trailing /
         return $dir;
     }
 
-    public function addLog($txt, $type = '')
+
+    function addLog($txt, $type = "")
     {
-        if (php_sapi_name() == 'cli') {
-            echo "\t".$txt."\n";
+        if (php_sapi_name() == "cli") {
+            echo "\t" . $txt . "\n";
         } else {
             switch ($type) {
                 case 'error':
@@ -869,28 +829,28 @@ EOD;
     /**
      * returns the name of the filename if the original filename constains .php then it is not added, otherwise
      * it is added.
-     *
      * @return string
      */
-    public function getFileName()
+    function getFileName()
     {
         if (strpos($this->savefileName, '.php') === false) {
-            return $this->savefileName.$this->extension;
+            return $this->savefileName . $this->extension;
         } else {
             return $this->savefileName;
         }
     }
 
-    public function process()
+    function process()
     {
         $this->rooturl = $this->fixSeparator($this->rooturl);
         $this->fileGen = $this->fixSeparator($this->fileGen);
         if ($this->rooturl) {
-            $this->baseGen = $this->dirNameLinux($this->fileGen.'/'.$this->getFileName());
+            $this->baseGen = $this->dirNameLinux($this->fileGen . "/" . $this->getFileName());
             $files = $this->listFolderFiles($this->rooturl);
             $filesAbsolute = array_fill(0, count($files), false);
 
-            $extPathArr = explode(',', $this->externalPath);
+
+            $extPathArr = explode(",", $this->externalPath);
             foreach ($extPathArr as $ep) {
                 $ep = $this->dirNameLinux($ep, false);
                 $files2 = $this->listFolderFiles($ep);
@@ -899,24 +859,25 @@ EOD;
                     $filesAbsolute[] = true;
                 }
             }
-            $ns = [];
-            $nsAlt = [];
-            $pathAbsolute = [];
-            $autoruns = [];
-            $autorunsFirst = [];
-            $this->excludeNSArr = str_replace(["\n", "\r", ' '], '', $this->excludeNS);
-            $this->excludeNSArr = explode(',', $this->excludeNSArr);
+            $ns = array();
+            $nsAlt = array();
+            $pathAbsolute = array();
+            $autoruns = array();
+            $autorunsFirst = array();
+            $this->excludeNSArr = str_replace(["\n", "\r", " "], "", $this->excludeNS);
+            $this->excludeNSArr = explode(",", $this->excludeNSArr);
 
             $this->excludePathArr = $this->fixSeparator($this->excludePath);
-            $this->excludePathArr = str_replace(["\n", "\r"], '', $this->excludePath);
-            $this->excludePathArr = explode(',', $this->excludePathArr);
+            $this->excludePathArr = str_replace(["\n", "\r"], "", $this->excludePath);
+            $this->excludePathArr = explode(",", $this->excludePathArr);
             foreach ($this->excludePathArr as &$item) {
                 $item = trim($item);
             }
 
-            $this->result = '';
+
+            $this->result = "";
             if ($this->button) {
-                foreach ($files as $key=>$f) {
+                foreach ($files as $key => $f) {
                     $f = $this->fixSeparator($f);
                     $runMe = '';
                     $pArr = $this->parsePHPFile($f, $runMe);
@@ -959,14 +920,14 @@ EOD;
                             $this->statNumClass++;
                         }
 
-                        $altUrl = ($nsp != '') ? $nsp.'\\'.$cs : $cs; // namespace
+                        $altUrl = ($nsp != "") ? $nsp . '\\' . $cs : $cs; // namespace
 
-                        if ($nsp != '' || $cs != '') {
-                            if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs.$this->extension) {
+                        if ($nsp != "" || $cs != "") {
+                            if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . $this->extension) {
                                 // namespace doesn't exist and the class is equals to the name
                                 // adding as a folder
                                 $exclude = false;
-                                if (in_array($nsp, $this->excludeNSArr) && $nsp != '') {
+                                if (in_array($nsp, $this->excludeNSArr) && $nsp != "") {
                                     //if ($this->inExclusion($nsp, $this->excludeNSArr) && $nsp!="") {
                                     $this->addLog("\tIgnoring namespace (path specified in <b>Excluded NameSpace</b>): <b>$altUrl -> $full</b>", 'warning');
                                     $exclude = true;
@@ -981,7 +942,7 @@ EOD;
                                 }
 
                                 if (!$exclude) {
-                                    if ($nsp == '') {
+                                    if ($nsp == "") {
                                         $this->addLog("Adding Full map (empty namespace): <b>$altUrl -> $full</b> to class <i>$cs</i>");
                                         $nsAlt[$altUrl] = $full;
                                         $pathAbsolute[$altUrl] = $filesAbsolute[$key];
@@ -1007,8 +968,9 @@ EOD;
                                         die(1);
                                     }
                                 } else {
-                                    if ((!in_array($altUrl, $this->excludeNSArr) || $nsp == '')
-                                            && !$this->inExclusion($urlFull, $this->excludePathArr)) {
+                                    if ((!in_array($altUrl, $this->excludeNSArr) || $nsp == "")
+                                        && !$this->inExclusion($urlFull, $this->excludePathArr)
+                                    ) {
                                         $this->addLog("Adding Full: <b>$altUrl -> $full</b> to class <i>$cs</i>");
                                         $nsAlt[$altUrl] = $full;
                                         $pathAbsolute[$altUrl] = $filesAbsolute[$key];
@@ -1019,7 +981,7 @@ EOD;
                     }
                     if (count($pArr) == 0) {
                         $this->statNumPHP++;
-                        if ($runMe == '@noautoload') {
+                        if ($runMe == "@noautoload") {
                             $this->addLog("\tIgnoring <b>$full</b> Reason: <b>@noautoload</b> found", 'warning');
                         } else {
                             $this->addLog("\tIgnoring <b>$full</b> Reason: No class found on file.", 'warning');
@@ -1033,7 +995,7 @@ EOD;
                     $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload</b> found");
                 }
                 $autoruns = array_merge($autorunsFirst, $autoruns);
-                $this->result = $this->genautoload($this->fileGen.'/'.$this->getFileName(), $ns, $nsAlt, $pathAbsolute, $autoruns);
+                $this->result = $this->genautoload($this->fileGen . "/" . $this->getFileName(), $ns, $nsAlt, $pathAbsolute, $autoruns);
             }
             if ($this->statNumPHP === 0) {
                 $p = 100;
@@ -1045,106 +1007,92 @@ EOD;
             } else {
                 $pc = round((count($ns) + count($nsAlt)) * 100 / $this->statNumClass, 2);
             }
-            $this->addLog('Number of Classes: <b>'.$this->statNumClass.'</b>', 'stat');
-            $this->addLog('Number of Namespaces: <b>'.count($this->statNameSpaces).'</b>', 'stat');
-            $this->addLog('<b>Number of Maps:</b> <b>'.(count($ns) + count($nsAlt)).'</b> (you want to reduce it)', 'stat');
-            $this->addLog('Number of PHP Files: <b>'.$this->statNumPHP.'</b>', 'stat');
-            $this->addLog('Number of PHP Autorun: <b>'.count($autoruns).'</b>', 'stat');
-            $this->addLog('Number of conflicts: <b>'.$this->statConflict.'</b>', 'stat');
+            $this->addLog("Number of Classes: <b>" . $this->statNumClass . "</b>", 'stat');
+            $this->addLog("Number of Namespaces: <b>" . count($this->statNameSpaces) . "</b>", 'stat');
+            $this->addLog("<b>Number of Maps:</b> <b>" . (count($ns) + count($nsAlt)) . "</b> (you want to reduce it)", 'stat');
+            $this->addLog("Number of PHP Files: <b>" . $this->statNumPHP . "</b>", 'stat');
+            $this->addLog("Number of PHP Autorun: <b>" . count($autoruns) . "</b>", 'stat');
+            $this->addLog("Number of conflicts: <b>" . $this->statConflict . "</b>", 'stat');
             if ($this->statError) {
-                $this->addLog('Number of errors: <b>'.$this->statError.'</b>', 'staterror');
+                $this->addLog("Number of errors: <b>" . $this->statError . "</b>", 'staterror');
             }
 
-            $this->addLog('Ratio map per file: <b>'.$p.'%  '.$this->evaluation($p).'</b> (less is better. 100% means one map/one file)', 'statinfo');
-            $this->addLog('Ratio map per classes: <b>'.$pc.'% '.$this->evaluation($pc).'</b> (less is better. 100% means one map/one class)', 'statinfo');
-            $this->addLog('Map size: <b>'.round($this->statByteUsed / 1024, 1)." kbytes</b> (less is better, it's an estimate of the memory used by the map)", 'statinfo');
+            $this->addLog("Ratio map per file: <b>" . $p . "%  " . $this->evaluation($p) . "</b> (less is better. 100% means one map/one file)", 'statinfo');
+            $this->addLog("Ratio map per classes: <b>" . $pc . "% " . $this->evaluation($pc) . "</b> (less is better. 100% means one map/one class)", 'statinfo');
+            $this->addLog("Map size: <b>" . round($this->statByteUsed / 1024, 1) . " kbytes</b> (less is better, it's an estimate of the memory used by the map)", 'statinfo');
         } else {
-            $this->addLog('No folder specified');
+            $this->addLog("No folder specified");
         }
     }
-
     private function evaluation($percentage)
     {
         switch (1 == 1) {
             case $percentage === 0:
-                return 'How?';
+                return "How?";
                 break;
             case $percentage < 10:
-                return 'Awesome';
+                return "Awesome";
                 break;
             case $percentage < 25:
-                return 'Good';
+                return "Good";
                 break;
             case $percentage < 40:
-                return 'Acceptable';
+                return "Acceptable";
                 break;
             case $percentage < 80:
-                return 'Bad.';
+                return "Bad.";
                 break;
         }
-
-        return 'BAAAAAD!';
+        return "BAAAAAD!";
     }
 
     /**
-     * @param string   $path
+     * @param string $path
      * @param string[] $exclusions
-     *
      * @return bool
      */
     private function inExclusion($path, $exclusions)
     {
         foreach ($exclusions as $ex) {
-            if ($ex != '') {
+            if ($ex != "") {
                 if (substr($ex, -1, 1) == '*') {
                     $bool = $this->startwith($path, substr($ex, 0, -1));
-                    if ($bool) {
-                        return true;
-                    }
+                    if ($bool) return true;
                 }
                 if (substr($ex, 0, 1) == '*') {
                     $bool = $this->endswith($path, $ex);
-                    if ($bool) {
-                        return true;
-                    }
+                    if ($bool) return true;
                 }
-                if (strpos($ex, '*') === false) {
-                    if ($path == $ex) {
-                        return true;
-                    }
+                if (strpos($ex, "*") === false) {
+                    if ($path == $ex) return true;
                 }
             }
         }
-
         return false;
     }
-
-    public function startwith($string, $test)
+    function startwith($string, $test)
     {
-        return strpos($string, $test) === 0;
+        return (strpos($string, $test) === 0);
     }
-
-    public function endswith($string, $test)
+    function endswith($string, $test)
     {
         $strlen = strlen($string);
         $testlen = strlen($test);
-        if ($testlen > $strlen) {
-            return false;
-        }
-
+        if ($testlen > $strlen) return false;
         return substr_compare($string, $test, $strlen - $testlen, $testlen) === 0;
     }
 
-    public function render()
+    function render()
     {
         if ($this->debugMode) {
             ob_clean();
         }
 
-        if (php_sapi_name() == 'cli') {
+        if (php_sapi_name() == "cli") {
             $t2 = microtime(true);
-            echo "\n".(round(($t2 - $this->t1) * 1000) / 1000)." sec. Finished\n";
+            echo "\n" . (round(($t2 - $this->t1) * 1000) / 1000) . " sec. Finished\n";
         } else {
+
             if (!$this->logged) {
                 $web = <<<'LOGS'
 <!DOCTYPE html>
@@ -1205,6 +1153,9 @@ EOD;
 LOGS;
                 echo $web;
             } else {
+
+
+
                 $web = <<<'TEM1'
 <!DOCTYPE html>
 <html lang="en">
@@ -1386,56 +1337,61 @@ LOGS;
 </html>    
 TEM1;
 
-                $web = str_replace('{{rooturl}}', $this->rooturl, $web);
-                $web = str_replace('{{fileGen}}', $this->fileGen, $web);
-                $web = str_replace('{{extension}}', $this->extension, $web);
 
-                $web = str_replace('{{excludeNS}}', $this->excludeNS, $web);
-                $web = str_replace('{{externalPath}}', $this->externalPath, $web);
-                $web = str_replace('{{excludePath}}', $this->excludePath, $web);
-                $web = str_replace('{{savefile}}', ($this->savefile) ? 'checked' : '', $web);
-                $web = str_replace('{{savefileName}}', $this->savefileName, $web);
-                $web = str_replace('{{stop}}', ($this->stop) ? 'checked' : '', $web);
+                $web = str_replace("{{rooturl}}", $this->rooturl, $web);
+                $web = str_replace("{{fileGen}}", $this->fileGen, $web);
+                $web = str_replace("{{extension}}", $this->extension, $web);
 
-                $web = str_replace('{{log}}', $this->log, $web);
-                $web = str_replace('{{logstat}}', $this->logStat, $web);
-                $web = str_replace('{{version}}', $this::VERSION, $web);
-                $web = str_replace('{{result}}', $this->result, $web);
+
+                $web = str_replace("{{excludeNS}}", $this->excludeNS, $web);
+                $web = str_replace("{{externalPath}}", $this->externalPath, $web);
+                $web = str_replace("{{excludePath}}", $this->excludePath, $web);
+                $web = str_replace("{{savefile}}", ($this->savefile) ? "checked" : "", $web);
+                $web = str_replace("{{savefileName}}", $this->savefileName, $web);
+                $web = str_replace("{{stop}}", ($this->stop) ? "checked" : "", $web);
+
+                $web = str_replace("{{log}}", $this->log, $web);
+                $web = str_replace("{{logstat}}", $this->logStat, $web);
+                $web = str_replace("{{version}}", $this::VERSION, $web);
+                $web = str_replace("{{result}}", $this->result, $web);
 
                 $this->cli = "php autoloadone.php -folder \"{$this->rooturl}\" -filegen \"{$this->fileGen}\" -save ";
 
-                $tmp = str_replace("\n", '', $this->excludeNS);
-                $tmp = str_replace("\r", '', $tmp);
+                $tmp = str_replace("\n", "", $this->excludeNS);
+                $tmp = str_replace("\r", "", $tmp);
                 $this->cli .= "-excludens \"{$tmp}\" ";
 
-                $tmp = str_replace("\n", '', $this->externalPath);
-                $tmp = str_replace("\r", '', $tmp);
+                $tmp = str_replace("\n", "", $this->externalPath);
+                $tmp = str_replace("\r", "", $tmp);
                 $this->cli .= "-externalpath \"{$tmp}\" ";
 
-                $tmp = str_replace("\n", '', $this->excludePath);
-                $tmp = str_replace("\r", '', $tmp);
+                $tmp = str_replace("\n", "", $this->excludePath);
+                $tmp = str_replace("\r", "", $tmp);
                 $this->cli .= "-excludepath \"{$tmp}\"";
 
-                $web = str_replace('{{cli}}', $this->cli, $web);
+
+                $web = str_replace("{{cli}}", $this->cli, $web);
 
                 $t2 = microtime(true);
-                $ms = (round(($t2 - $this->t1) * 1000) / 1000).' sec.';
+                $ms = (round(($t2 - $this->t1) * 1000) / 1000) . " sec.";
 
-                $web = str_replace('{{ms}}', $ms, $web);
+                $web = str_replace("{{ms}}", $ms, $web);
                 echo $web;
             }
         }
     }
 } // end class AutoLoadOne
 
-if (_AUTOLOAD_SELFRUN || php_sapi_name() == 'cli') {
+
+if (_AUTOLOAD_SELFRUN || php_sapi_name() == "cli") {
     $auto = new AutoLoadOne();
     $auto->init();
     $auto->process();
     $auto->render();
 }
 
+
 // @noautoload
-/*
+/**
  * @noautoload
  */
