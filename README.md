@@ -16,7 +16,7 @@ Contrary to other alternatives, it supports the easiest way to autoload classes 
 
 AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.  
 
-**Last Update Octuber 14, 2018**
+**Last Update June 8, 2019**
 
 > "Universal Autoloading classes in PHP, any class, any time!"
 
