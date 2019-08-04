@@ -458,6 +458,8 @@ Deny from all
 * Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
 
 ## Version
+
+* 1.16 2019-08-04 Removed git reference. It's not used.  Changed the style format to PSR
 * 1.15 2019-06-08 Removed external css again. Now it generates the css inside the file.
 * 1.14 2019-06-08 Fixed some bug.  Reverted to global (const arrays are not compatible with php<7.0)
 * 1.12 2019-05-10 Added some changes pushed. Removed css.
