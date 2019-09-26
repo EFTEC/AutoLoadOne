@@ -66,7 +66,7 @@ Or you could run AutoLoadOne.php again and replace the old generated file.
  Copy the file **autoloadone.php** somewhere.
 
 :two:  
- For security, you couldedit the first lines of the class **autoloadone.php**. Change the user, password and autoloadenter if it's required.
+ For security, you could edit the first lines of the class **autoloadone.php**. Change the user, password and autoloadenter if it's required.
 
 ```php
 <?php
@@ -280,7 +280,7 @@ File generated:
     
 ### Optimized AutoLoadOne 
 
-I separated PHPUnit and Mockery from the project. Why?. Both libraries are for unit test.
+I separated PHPUnit and Mockery from the project. Why? Both libraries are for unit test.
 
 excluded namespace = /vendor/phpunit/*,/vendor/mockery/*
 
