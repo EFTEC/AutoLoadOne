@@ -341,10 +341,10 @@ However, some classes are not required to be loaded by the project (for example 
 
 For example, excluding PHPUnit and Mockery reduces the use to 206mb (1000 users) or 2gb (10k users) but **we could optimize it even further.**
  
-| Concurrent Users | Composer's autoload (Optimized) | AutoLoadOne | AutoLoadOne Optimized |
-|------------------|---------------------------------|-------------|-----------------------|
-| 1000             | 609mb                           | 301mb       | 206mb                 |
-| 10000            | 6gb                             | 3gb         | 2gb                   |
+| Concurrent Users | Composer's autoload (Optimized) | AutoLoadOne | AutoLoadOne Optimized | AutoLoadOne Optimized and compressed |
+|------------------|---------------------------------|-------------|-----------------------|-----------------------|
+| 1000             | 609mb                           | 301mb       | 206mb                 | 130mb                 |
+| 10000            | 6gb                             | 3gb         | 2gb                   |1gb                    |
 
 
 ### Lookup usage?
@@ -363,34 +363,54 @@ So, the size of the map/lookup time is not important. The difference between a s
 
 Let's say we have 10k concurrent users and each one calls 100 different classes. It means we are doing 10k x 100 = 1 million of lookup at the same time.
 
-## TEST II (Magento 2.x)
+## TEST II (Magento 2.2.3)
 
-Magento is a huge project, it has 22k PHP files and from it, 20k are classes.  However, it generates a map of 9.2k elements (without optimization)
+Magento is a huge project, it has 22k PHP files and from it, 20k are classes. 
 
 AutoLoadOne:
 
-    Number of Classes: 20596
-    Number of Namespaces: 6868
-    Number of Maps: 9242 (you want to reduce it)
-    Number of PHP Files: 22227
+    Number of Classes: 21063
+    Number of Namespaces: 7018
+    Number of Maps: 9473 (you want to reduce it)
+    Number of PHP Files: 22862
     Number of PHP Autorun: 0
     Number of conflicts: 6
+    Ratio map per file: 41.44% Bad. (less is better. 100% means one map/one file)
+    Ratio map per classes: 44.97% Bad. (less is better. 100% means one map/one class)
+    Map size: 1398.7 kbytes (less is better, it's an estimate of the memory used by the map)
+    Map size Compressed: 1195.1 kbytes (less is better, it's an estimate of the memory used by the map)
 
-    File size 1.06mb
+It takes +/- 200 seconds to generate the autoload.php 
 
-It takes 38 seconds to generate the autoload.php 
+In comparison, Composer's autoload (optimized) uses
 
-While using Composer's autoload (optimized)
-
-    Generated optimized autoload files containing 11329 classes
-    Number of Maps: 11329 (1.6mb file size)
-
-| Concurrent Users(*) | Composer's autoload (Optimized) | AutoLoadOne (not optimized) |
+    Generated optimized autoload files containing 11582 classes
+    Number of Maps: 11582 classes (2.6mb will use per request.
+    
+|Composer's autoload (optimized) | AutoLoadOne (not optimized) |  AutoLoadOne (not optimized, compressed) |     
 |------------------|---------------------------------|-------------|
-| 1000             | 2.08gb                          | 1.37gb      |
-| 10000            | 20.8gb                          | 13.7gb      |    
+| 2.6mb | 1.36mb| 1.16mb|
 
-> (*) However, Magento wasn't create for concurrency. But, however what we are measuring is not the number of concurrent users but the number of concurrent calls (for example rest-json, opening a page and such).
+However, it is without a manual optimization.    
+    
+### Let's say we have 1000 concurrent users    
+
+| Concurrent Users(*) | Composer's autoload (Optimized) | AutoLoadOne (not optimized) |  AutoLoadOne (compressed) |
+|------------------|---------------------------------|-------------|-------------|
+| 1000             | 2.6gb                          | 1.36gb      |1.16gb      |
+| 10000            | 26gb                          | 13.6gb      |11.6gb      |      
+
+> (*) However, Magento wasn't create for concurrency. But, however what we are measuring is not the number of
+> concurrent users but the number of concurrent calls (for example rest-json, opening a page and such).
+
+### Compression and Magento.
+
+While AutoLoadOne is able to compress the map but it only compresses the path of it, not the namespace. It is
+because the compression is aimed to generate the minimum impact on the system.   Magento relies heavily in huge 
+namespaces so the compression is unable to compress them. But still, the system is able to compress values in 15%.
+
+In general, the compression allows to shrink the values in 40-50%.
+
 
 ### Code execution.
 
@@ -459,9 +479,11 @@ Deny from all
 
 ## Version
 
+* 1.17 2020-01-26 (optional but by default), the map is compressed.
+    *  The compression has a minimum impact on runtime, it only uses a regular expression to replace a string. 
 * 1.16 2019-08-04 Removed git reference. It's not used.  Changed the style format to PSR
 * 1.15 2019-06-08 Removed external css again. Now it generates the css inside the file.
-* 1.14 2019-06-08 Fixed some bug.  Reverted to global (const arrays are not compatible with php<7.0)
+* 1.14 2019-06-08 Fixed some bug.  Reverted to global (const arrays are not compatible with php<7.0)  
 * 1.12 2019-05-10 Added some changes pushed. Removed css.
 * 1.11 2019-03-04 It allows to specify the result php file. And some cleanups.  Now, /namespace/nameclass:class is not considered a class
 * 1.10 2018-10-18 It solves a small bug when we load autoload.php from a different url and it calls a external and remote folder.

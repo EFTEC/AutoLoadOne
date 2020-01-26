@@ -2,6 +2,8 @@
 namespace dummy;
 
 use ClassWithoutNameSpace;
+
+
 use mapache_commons\Collection;
 
 define("_AUTOLOAD_ONEDEBUG",true);
@@ -39,6 +41,11 @@ echo '$c8=new \AnotherProject\Connection();<br>';
 // class without namespace
 $c9=new ClassWithoutNameSpace();
 echo '$c9=new ClassWithoutNameSpace();<br>';
+// class compressed
+$c10=new \folder_ns\subnamespace\ClassFolder1\ClassFolder1();
+echo '$c10=new \folder_ns\subnamespace\ClassFolder1\ClassFolder1();<br>';
+$c11=new \ClassFolder1();
+echo '$c11=new \ClassFolder1();<br>';
 // class external. It is loaded externally. Of course it will fail if you are not loading (the class is not supplied in this project)
 /*
 $ex=new \nsexternal\External();

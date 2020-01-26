@@ -33,12 +33,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.16 2019-06-08
+ * @version   1.17 2020-01-26
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.16';
+    const VERSION = '1.17';
     const JSON_UNESCAPED_SLASHES = 64;
     const JSON_PRETTY_PRINT = 128;
     const JSON_UNESCAPED_UNICODE = 256;
@@ -48,6 +48,7 @@ class AutoLoadOne
     public $savefile = 1;
     public $savefileName = 'autoload.php';
     public $stop = 0;
+    public $compression = 1;
     public $button = 0;
     public $excludeNS = '';
     public $excludePath = '';
@@ -66,6 +67,7 @@ class AutoLoadOne
     public $statError = 0;
     public $statNameSpaces = [];
     public $statByteUsed = 1024;
+    public $statByteUsedCompressed = 1024;
     public $fileConfig = 'autoloadone.json';
 
     public $extension = '.php';
@@ -96,6 +98,7 @@ class AutoLoadOne
         $this->savefile = $this->getParameterCli('save');
         $this->savefileName = $this->getParameterCli('savefilename', 'autoload.php');
         $this->stop = $this->getParameterCli('stop');
+        $this->compression = $this->getParameterCli('compression');
         $this->current = $this->getParameterCli('current', true);
         $this->excludeNS = $this->getParameterCli('excludens');
         $this->excludePath = $this->getParameterCli('excludepath');
@@ -151,6 +154,7 @@ eot;
             echo "-folder (folder to scan)\n";
             echo '-filegen (folder where autoload' . $this->extension . " will be generate)\n";
             echo "-save (save the file to generate)\n";
+            echo "-compression (compress the result)\n";
             echo "-savefilename (the filename to be generated. By default its autoload.php)\n";
             echo "-excludens (namespace excluded)\n";
             echo "-excludepath (path excluded)\n";
@@ -167,6 +171,7 @@ eot;
             $this->savefile = 1;
             $this->savefileName = 'autoload.php';
             $this->stop = 0;
+            $this->compression = 1;
             $this->button = 1;
             $this->excludeNS = '';
             $this->externalPath = '';
@@ -176,6 +181,7 @@ eot;
         echo '-folder ' . $this->rooturl . " (folder to scan)\n";
         echo '-filegen ' . $this->fileGen . ' (folder where autoload' . $this->extension . " will be generate)\n";
         echo '-save ' . ($this->savefile ? 'yes' : 'no') . " (save filegen)\n";
+        echo '-compression ' . ($this->compression ? 'yes' : 'no') . " (compress the result)\n";
         echo '-savefilename ' . $this->savefileName . " (save filegen name)\n";
         echo '-excludens ' . $this->excludeNS . " (namespace excluded)\n";
         echo '-excludepath ' . $this->excludePath . " (path excluded)\n";
@@ -341,6 +347,7 @@ eot;
         $param['rooturl'] = $this->rooturl;
         $param['fileGen'] = $this->fileGen;
         $param['savefile'] = $this->savefile;
+        $param['compression'] = $this->compression;
         $param['savefileName'] = $this->savefileName;
         $param['excludeNS'] = $this->excludeNS;
         $param['excludePath'] = $this->excludePath;
@@ -382,6 +389,7 @@ eot;
         $this->fileGen = @$param['local']['fileGen'];
         $this->fileGen = ($this->fileGen == '.') ? $this->rooturl : $this->fileGen;
         $this->savefile = @$param['local']['savefile'];
+        $this->compression = @$param['local']['compression'];
         $this->savefileName = @$param['local']['savefileName'];
         $this->excludeNS = @$param['local']['excludeNS'];
         $this->excludePath = @$param['local']['excludePath'];
@@ -438,6 +446,7 @@ eot;
                 $this->savefile = (@$_POST['savefile']) ? @$_POST['savefile'] : $this->savefile;
                 $this->savefileName = (@$_POST['savefileName']) ? @$_POST['savefileName'] : $this->savefileName;
                 $this->stop = @$_POST['stop'];
+                $this->compression = @$_POST['compression'];
                 $ok = $this->saveParam();
                 if ($ok === false) {
                     $this->addLog('Unable to save configuration file <b>' . $this->fileConfig
@@ -467,6 +476,51 @@ eot;
         return $v;
     }
 
+    /**
+     * It compresses the paths
+     * 
+     * @param string[] $paths An associative array with the paths
+     *
+     * @return array
+     */
+    public function compress(&$paths) {
+        if(!$this->compression) return []; 
+        $arr=$paths;
+        $foundIndex=0;
+        $found=[];
+        foreach($arr as $key=>$item) {
+
+            if(strlen($item)>10) { // we compress path of at least 20 characters.
+                $maxcount=0;
+                $last=strlen($item);
+                for($index=$last;$index>10;$index--) { // we compress up to 20 characters.
+                    $sum=0;
+                    $findme=substr($item,0,$index);
+                    foreach($arr as $item2) {
+                        if(strpos($item2,$findme)===0) {
+                            $sum+=$index; // it counts the number of characters
+                        }
+                    }
+                    if($sum>$maxcount && $sum>=$index*2) { // it must save at least x2 the number of characters compressed
+                        $maxcount=$sum;
+                        $foundIndex++;
+                        $foundKey='|'.$foundIndex.'|';
+                        // replace
+                        foreach($arr as $k2=>$item2) {
+                            if(strpos($item2,$findme)===0) {
+                                $arr[$k2]=str_replace($findme,$foundKey,$item2);
+                                $sum+=$index; // it counts the number of characters
+                            }
+                        }
+                        $found[$foundIndex]=$findme;
+                    }
+                }
+            }
+        }   
+        $paths=$arr; 
+        return $found;
+    }
+
     public function init()
     {
         $this->log = '';
@@ -485,6 +539,9 @@ eot;
 
     public function genautoload($file, $namespaces, $namespacesAlt, $pathAbsolute, $autoruns)
     {
+
+        
+        
         $template = <<<'EOD'
 <?php
 /**
@@ -500,10 +557,16 @@ ${{tempname}}__debug = true;
 ${{tempname}}__arrautoloadCustom = [
 {{custom}}
 ];
+${{tempname}}__arrautoloadCustomCommon = [
+{{customCommon}}
+];
 
 /* @var string[] Where $_arrautoload['namespace']='folder' */
 ${{tempname}}__arrautoload = [
 {{include}}
+];
+${{tempname}}__arrautoloadCommon = [
+{{includeCommon}}
 ];
 
 /* @var boolean[] Where $_arrautoload['namespace' or 'namespace\Class']=true if it's absolute (it uses the full path) */
@@ -523,12 +586,14 @@ function {{tempname}}__auto($class_name)
     $cls = basename($class_name);
     // special cases
     if (isset($GLOBALS['{{tempname}}__arrautoloadCustom'][$class_name])) {
-        {{tempname}}__loadIfExists($GLOBALS['{{tempname}}__arrautoloadCustom'][$class_name], $class_name);
+        {{tempname}}__loadIfExists($GLOBALS['{{tempname}}__arrautoloadCustom'][$class_name]
+            , $class_name,'{{tempname}}__arrautoloadCustomCommon');
         return;
     }
     // normal (folder) cases
     if (isset($GLOBALS['{{tempname}}__arrautoload'][$ns])) {
-        {{tempname}}__loadIfExists($GLOBALS['{{tempname}}__arrautoload'][$ns] . '/' . $cls . '{{extension}}', $ns);
+        {{tempname}}__loadIfExists($GLOBALS['{{tempname}}__arrautoload'][$ns] . '/' . $cls . '{{extension}}'
+            , $ns,'{{tempname}}__arrautoloadCommon');
         return;
     }
 }
@@ -537,9 +602,10 @@ function {{tempname}}__auto($class_name)
  * We load the file.    
  * @param string $filename
  * @param string $key key of the class it could be the full class name or only the namespace
+ * @param string $arrayName [optional] it's the name of the arrayname used to replaced |n| values. 
  * @throws Exception
  */
-function {{tempname}}__loadIfExists($filename, $key)
+function {{tempname}}__loadIfExists($filename, $key,$arrayName='')
 {
     if (isset($GLOBALS['{{tempname}}__arrautoloadAbsolute'][$key])) {
         $fullFile = $filename; // its an absolute path
@@ -548,8 +614,9 @@ function {{tempname}}__loadIfExists($filename, $key)
             chdir(__DIR__);
         }
     } else {
-        $fullFile = __DIR__ . "/" . $filename; // its relative to this path
+        $fullFile = __DIR__ . "/" . {{tempname}}__replaceCurlyVariable($filename,$arrayName); // its relative to this path
     }
+    /** @noinspection PhpIncludeInspection */
     if ((@include $fullFile) === false) {
         if ($GLOBALS['{{tempname}}__debug']) {
             throw  new Exception("AutoLoadOne Error: Loading file [" . __DIR__ . "/" . $filename . "] for class [" . basename($filename) . "]");
@@ -562,6 +629,14 @@ function {{tempname}}__loadIfExists($filename, $key)
         }
     }
 }
+function {{tempname}}__replaceCurlyVariable($string,$arrayName) {
+    if(strpos($string,'|')===false) return $string; // nothing to replace.
+    return preg_replace_callback('/\\|\s?(\w+)\s?\\|/u', function ($matches) use ($arrayName) {
+        $item = is_array($matches) ? substr($matches[0], 1, strlen($matches[0]) - 2)
+            : substr($matches, 1, strlen($matches) - 2);
+        return $GLOBALS[$arrayName][$item];
+    }, $string);
+}
 
 spl_autoload_register(function ($class_name) {
     {{tempname}}__auto($class_name);
@@ -570,19 +645,22 @@ spl_autoload_register(function ($class_name) {
 {{autorun}}
 
 EOD;
-        $custom = '';
-        foreach ($namespacesAlt as $k => $v) {
-            $custom .= "\t'$k' => '$v',\n";
-        }
-        if ($custom != '') {
-            $custom = substr($custom, 0, -2);
-        }
-        $include = '';
+        $includeNotCompressed = $this->createArrayPHP($namespaces);
+        $customNotCompressed = $this->createArrayPHP($namespacesAlt);
+        
+        $commonAbsolute=$this->compress($namespacesAlt);
+        //$commonNameSpace=$this->compress($namespaces);
+        $commonNameAbs=$this->compress($namespaces);
 
-        foreach ($namespaces as $k => $v) {
-            $include .= "\t'$k' => '$v',\n";
-        }
-        $include = rtrim($include, ",\n");
+        
+        
+        
+        $custom = $this->createArrayPHP($namespacesAlt);
+        $htmlCommonAbsolute = $this->createArrayPHP($commonAbsolute);
+        $include = $this->createArrayPHP($namespaces);
+        
+        $htmlCommonNameAbs = $this->createArrayPHP($commonNameAbs);
+        
         $includeAbsolute = '';
         foreach ($pathAbsolute as $k => $v) {
             if ($v) {
@@ -594,11 +672,16 @@ EOD;
         foreach ($autoruns as $k => $v) {
             $autorun .= "@include __DIR__.'$v';\n";
         }
-        //
+        // 1024 is the memory used by code, *1.3 is an overhead, usually it's mess.
+        $this->statByteUsedCompressed = (strlen($include) + strlen($includeAbsolute) + strlen($custom)) * 1.3 + 1024;
+        $this->statByteUsed = (strlen($includeNotCompressed) + strlen($htmlCommonAbsolute)+strlen($htmlCommonNameAbs)
+                + strlen($includeAbsolute) + strlen($customNotCompressed)) * 1.3 + 1024;
 
         $template = str_replace('{{custom}}', $custom, $template);
         $template = str_replace('{{include}}', $include, $template);
+        $template = str_replace('{{customCommon}}', $htmlCommonAbsolute, $template);
         $template = str_replace('{{includeabsolute}}', $includeAbsolute, $template);
+        $template = str_replace('{{includeCommon}}', $htmlCommonNameAbs, $template);
         $template = str_replace('{{tempname}}', uniqid('s'), $template);
 
         $template = str_replace('{{autorun}}', $autorun, $template);
@@ -606,8 +689,8 @@ EOD;
         $template = str_replace('{{extension}}', $this->extension, $template);
         $template = str_replace('{{date}}', date('Y/m/d h:i:s'), $template);
 
-        // 1024 is the memory used by code, *1.3 is an overhead, usually it's mess.
-        $this->statByteUsed = (strlen($include) + strlen($includeAbsolute) + strlen($custom)) * 1.3 + 1024;
+        
+        
         if ($this->savefile) {
             $ok = @file_put_contents($file, $template);
             if ($ok) {
@@ -621,6 +704,19 @@ EOD;
         }
 
         return $template;
+    }
+    private function createArrayPHP($array) {
+        $result = '';
+        foreach ($array as $k => $v) {
+            if(is_numeric($k)) {
+                $result .= "\t$k => '$v',\n";
+            } else {
+                $result .= "\t'$k' => '$v',\n";    
+            }
+            
+        }
+        $result = rtrim($result, ",\n");
+        return $result;
     }
 
     public function listFolderFiles($dir)
@@ -657,6 +753,7 @@ EOD;
             if ($ff != '.' && $ff != '..') {
                 if (strlen($ff) >= 5) {
                     if (substr($ff, -4) == $this->extension) {
+                        // PHP_OS_FAMILY=='Windows'
                         $list[] = $dir . '/' . $ff;
                     }
                 }
@@ -772,7 +869,10 @@ EOD;
 
     public function genPath($path)
     {
+
         $path = $this->fixSeparator($path);
+        
+
         if (strpos($path, $this->baseGen) == 0) {
             $min1 = strripos($path, '/');
             $min2 = strripos($this->baseGen . '/', '/');
@@ -1064,6 +1164,9 @@ EOD;
                 . '</b> (less is better. 100% means one map/one class)', 'statinfo');
             $this->addLog('Map size: <b>' . round($this->statByteUsed / 1024, 1)
                 . " kbytes</b> (less is better, it's an estimate of the memory used by the map)", 'statinfo');
+            $this->addLog('Map size Compressed: <b>' . round($this->statByteUsedCompressed / 1024, 1)
+                . " kbytes</b> (less is better, it's an estimate of the memory used by the map)", 'statinfo');
+            
         } else {
             $this->addLog('No folder specified');
         }
@@ -1071,7 +1174,7 @@ EOD;
 
     private function evaluation($percentage)
     {
-        switch (1 == 1) {
+        switch (true) {
             case $percentage === 0:
                 return 'How?';
                 break;
@@ -1088,8 +1191,7 @@ EOD;
                 return 'Bad.';
                 break;
         }
-
-        return 'BAAAAAD!';
+        return 'The worst';
     }
 
     /**
@@ -1249,7 +1351,13 @@ TEM1;
               </div>             
               <div class="panel-body">
                 <form class="form-horizontal" role="form" method="post">
-
+                  <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                      <button type="submit" name="button" value="1" class="btn btn-primary">Generate</button>
+                      &nbsp;&nbsp;&nbsp;
+                      <button type="submit" name="button" value="logout" class="btn btn-default">Logout</button>
+                    </div>
+                  </div>
                   <div class="form-group">
                     <div class="col-sm-2">
                       <label class="control-label">Root Folder <span class="text-danger">(Req)</span> </label>
@@ -1261,6 +1369,7 @@ TEM1;
                       <em>Relative paths: folder/other, folder\other</em><br>
                       <em>Extension scanned: <b>{{extension}}</b></em><br>
                       <em>PHP files that contain the comment <b>@noautoload</b> are ignored</em><br>
+                      <em>The path is case sensitive even in Windows.<br>
                       <em>PHP files that don't contain a class/interface are ignored. Its allowed to have multiple classes per file</em><br>
                       <em>PHP files that contain the comment <b>"@autorun"</b> are executed (even if they don't have a class)</em><br>
                       <em>PHP files that contain the comment <b>"@autorun first"</b> are executed with priority</em><br>
@@ -1336,7 +1445,20 @@ TEM1;
                        /path* for any folder that starts with "/path*,"path/folder".."<br>
                        */path for any folder that ends with "*/path"</em></div>
                   </div>
-
+                  <div class="form-group">
+                    <div class="col-sm-2">
+                      <label class="control-label">Compression</label>
+                    </div>
+                    <div class="col-sm-10">
+                      <div class="checkbox">
+                        <label>
+                          <input type="checkbox" name="compression" value=1 {{compression}}>
+                          <em>Yes (it increases the time to generate)</em><br>
+                          </label>
+                          
+                      </div>
+                    </div>
+                  </div>
                   <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10">
                       <div class="checkbox">
@@ -1415,6 +1537,7 @@ TEM1;
                 $web = str_replace('{{savefile}}', ($this->savefile) ? 'checked' : '', $web);
                 $web = str_replace('{{savefileName}}', $this->savefileName, $web);
                 $web = str_replace('{{stop}}', ($this->stop) ? 'checked' : '', $web);
+                $web = str_replace('{{compression}}', ($this->compression) ? 'checked' : '', $web);
 
                 $web = str_replace('{{log}}', $this->log, $web);
                 $web = str_replace('{{logstat}}', $this->logStat, $web);
@@ -1423,6 +1546,10 @@ TEM1;
 
                 $this->cli = "php autoloadone.php -folder \"{$this->rooturl}\" -filegen \"{$this->fileGen}\" -save ";
 
+                $tmp=($this->compression ? 'yes' : 'no'); 
+                $this->cli .= "-compression {$tmp} ";
+                
+                
                 $tmp = str_replace("\n", '', $this->excludeNS);
                 $tmp = str_replace("\r", '', $tmp);
                 $this->cli .= "-excludens \"{$tmp}\" ";

@@ -2,6 +2,9 @@
 // This code will generate the file autoload.php
 
 use eftec\AutoLoadOne\AutoLoadOne;
+
+
+
 define("_AUTOLOAD_SELFRUN",false);
 define("_AUTOLOAD_ONLYCLI",false);
 define("_AUTOLOAD_ENTER",false);
