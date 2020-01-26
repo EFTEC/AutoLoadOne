@@ -58,7 +58,8 @@ Or you could run AutoLoadOne.php again and replace the old generated file.
 :white_check_mark: It doesn't require APCU, lock files or cache.  
 :white_check_mark: It´s compatible with practically any project, including a project that uses Composer's autoload.  
 :white_check_mark: PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.  
-:white_check_mark: It allows libraries outside of the project folder.  For example /someuser/myproject/ allows to include libraries from the folder /otheruser/library/
+:white_check_mark: It allows libraries outside of the project folder.  
+For example /someuser/myproject/ allows to include libraries from the folder /otheruser/library/    
 :white_check_mark: It allows compression without impacting the runtime.
 
 ## Getting started
