@@ -26,7 +26,7 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
     define('_AUTOLOAD_SAVEPARAM', true);
 } // true if you want to save the parameters.
 //*************************************************************
-// @ini_set('max_execution_time', 300); // Limit of 5 minutes.
+@ini_set('max_execution_time', 600); // Limit of 10 minutes.
 
 /**
  * Class AutoLoadOne.

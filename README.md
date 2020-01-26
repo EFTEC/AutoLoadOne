@@ -4,7 +4,7 @@ AutoloadOne is a program that generates an autoload class (Auto Include) for PHP
 
 [![Packagist](https://img.shields.io/packagist/v/eftec/autoloadone.svg)](https://packagist.org/packages/eftec/autoloadone)
 [![Total Downloads](https://poser.pugx.org/eftec/autoloadone/downloads)](https://packagist.org/packages/eftec/autoloadone)
-[![Maintenance](https://img.shields.io/maintenance/yes/2019.svg)]()
+[![Maintenance](https://img.shields.io/maintenance/yes/2020.svg)]()
 [![composer](https://img.shields.io/badge/composer-%3E1.8-blue.svg)]()
 [![php](https://img.shields.io/badge/php->5.6-green.svg)]()
 [![php](https://img.shields.io/badge/php-7.x-green.svg)]()
@@ -16,7 +16,7 @@ Contrary to other alternatives, it supports the easiest way to autoload classes 
 
 AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.  
 
-**Last Update June 8, 2019**
+**Last Update Jan 26, 2020**
 
 > "Universal Autoloading classes in PHP, any class, any time!"
 
@@ -59,6 +59,30 @@ Or you could run AutoLoadOne.php again and replace the old generated file.
 :white_check_mark: It´s compatible with practically any project, including a project that uses Composer's autoload.  
 :white_check_mark: PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.  
 :white_check_mark: It allows libraries outside of the project folder.  For example /someuser/myproject/ allows to include libraries from the folder /otheruser/library/
+:white_check_mark: It allows compression without impacting the runtime.
+
+## Getting started
+
+You could run directly AutoLoadOne.php (via web of via CLI) or you could create a file that calls it.
+
+* Copy AutoLoadOne.php in the root folder (recommended) of your project
+* Execute it directly or
+* Create the next PHP file (in the root folder) and execute it.
+
+```php
+<?php
+// This code will generate the file autoload.php
+
+use eftec\AutoLoadOne\AutoLoadOne;
+
+define("_AUTOLOAD_SELFRUN",false); // we want to call it manually.
+include "AutoLoadOne.php"; // or change the path of the file.
+$auto=new AutoLoadOne();
+$auto->init();
+$auto->process();
+$auto->render();
+```
+
 
 ## Usage (generate code via Web)
 
