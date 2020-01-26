@@ -60,8 +60,9 @@ Or you could run AutoLoadOne.php again and replace the old generated file.
 :white_check_mark: It's compatible with PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.  
 :white_check_mark: It allows libraries outside of the project folder.  
 For example /someuser/myproject/ allows to include libraries from the folder /otheruser/library/
-:red_check_mark: It doesn't require APCU, lock files or cache.      
-:white_check_mark: It allows compression without impacting the runtime.
+:large_blue_circle: It doesn't require APCU, lock files or cache.
+:large_blue_circle: It has a minimum impact on runtime.      
+:large_blue_circle: It allows compression without impacting the runtime.
 
 ## Getting started
 
