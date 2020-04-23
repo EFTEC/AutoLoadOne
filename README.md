@@ -12,11 +12,18 @@ AutoloadOne is a program that generates an autoload class (Auto Include) for PHP
 
 
 
-Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php (or the name indicated) file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate the autoload class, include and you are ready to load any class (even classes without a namespace, classes in the namespace in different folders, multiple classes defined in a single file...).  
+Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.
+ How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php (or the name 
+indicated) file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate 
+the autoload **class**, **include** and you are ready to load any class (even classes without a namespace, classes in the 
+namespace in different folders, multiple classes defined in a single file...).  
 
-AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.  
+AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.
 
-**Last Update Jan 26, 2020**
+
+> <b>NOTE:</b> If you run the dev-distro, then you must exclude the example/ folder because it contains @autorun tags.  
+
+**Last Update Apr 26, 2020**
 
 > "Universal Autoloading classes in PHP, any class, any time!"
 
