@@ -506,6 +506,9 @@ Deny from all
 
 ## Version
 
+* 1.18 2020-04-23 
+    * Some cleaning.
+    * The generated file is alsoc cleaned and optimized.   
 * 1.17 2020-01-26 (optional but by default), the map is compressed.
     *  The compression has a minimum impact on runtime, it only uses a regular expression to replace a string. 
 * 1.16 2019-08-04 Removed git reference. It's not used.  Changed the style format to PSR
