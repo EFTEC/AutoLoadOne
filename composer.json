@@ -4,7 +4,7 @@
   "type": "software",
   "version": "1.18",
   "keywords": ["php","autoload"],
-  "homepage": "https://github.com/EFTEC/AutoLoadOne/tree/legacy",
+  "homepage": "https://github.com/EFTEC/AutoLoadOne",
   "minimum-stability": "beta",
   "license": "MIT",
   "authors": [
