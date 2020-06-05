@@ -2,7 +2,7 @@
   "name": "eftec/autoloadone",
   "description": "AutoloadOne is a program that generates an autoload class for PHP.",
   "type": "software",
-  "version": "1.19.1",
+  "version": "1.19.2",
   "keywords": ["php","autoload"],
   "homepage": "https://github.com/EFTEC/AutoLoadOne",
   "minimum-stability": "beta",

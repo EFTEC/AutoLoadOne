@@ -20,6 +20,10 @@ if (!defined('_AUTOLOAD_USER')) {
 } // user (web interface)
 if (!defined('_AUTOLOAD_PASSWORD')) {
     define('_AUTOLOAD_PASSWORD', 'autoloadone');
+}
+if (!defined('_AUTOLOAD_COMPOSERJSON')) {
+    /** if true then it considers composer.json {'autoload':{'files':[]}} and adds it as autorun */
+    define('_AUTOLOAD_COMPOSERJSON', false);    
 } // password (web interface)
 if (!defined('_AUTOLOAD_ENTER')) {
     define('_AUTOLOAD_ENTER', true);
@@ -41,12 +45,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.19.1 2020-05-26
+ * @version   1.19.2 2020-05-26
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.19.1';
+    const VERSION = '1.19.2';
     const JSON_UNESCAPED_SLASHES = 64;
     const JSON_PRETTY_PRINT = 128;
     const JSON_UNESCAPED_UNICODE = 256;
@@ -654,14 +658,14 @@ EOD;
             $excludePathArr[$key] = trim($item);
         }
         
-        
-        foreach ($autoruns as $k => $v) {
-            if($this->inExclusion(dirname($v),$excludePathArr)) {
-                $autorun .= "// @include __DIR__.'$v'; // excluded by path\n";    
-            } else {
-                $autorun .= "@include __DIR__.'$v';\n";
+        if (_AUTOLOAD_COMPOSERJSON) {
+            foreach ($autoruns as $k => $v) {
+                if ($this->inExclusion(dirname($v), $excludePathArr)) {
+                    $autorun .= "// @include __DIR__.'$v'; // excluded by path\n";
+                } else {
+                    $autorun .= "@include __DIR__.'$v';\n";
+                }
             }
-            
         }
         // 1024 is the memory used by code, *1.3 is an overhead, usually it's mess.
         $this->statByteUsedCompressed = (strlen($include) + strlen($includeAbsolute) + strlen($custom)) * 1.3 + 1024;

@@ -516,8 +516,10 @@ Deny from all
 ## Composer.json
 
 Commonly, this library does not need **composer.json**, and it actively ignores its configuration (because it reads the PHP
- source code directly). However, since 1.19 it reads part of the information of composer.json (for compatibility 
+ source code directly). However, since 1.19, AutoLoadOne reads (optionally) part of the information of composer.json (for compatibility 
 purpose).  For example, the library **guzzlehttp** uses this feature.   
+
+> Note: it requires to set the constant _AUTOLOAD_COMPOSERJSON to **true**. By default, this variable is **false**.
   
 Let's say the next file:  
 
@@ -534,19 +536,27 @@ composer.json
 }
 ```
 
-AutoLoadOne includes the file (or files) declared in composer.json and declared in 'files'.  This file or files is 
- added to our autoload.php as follows:
+If AUTOLOAD_COMPOSERJSON is true the AutoLoadOne includes the file (or files) declared in composer.json and declared 
+in 'files'.  This file or files is added to our autoload.php as follows:
  
+Our code to generate autorun.php  
+```php
+define("_AUTOLOAD_COMPOSERJSON",true);
+include 'vendor/eftec/autoloadone/AutoLoadOne.php';
+``` 
+ 
+And our autorun.php generated.  
 ```php   
 @include __DIR__.'/folder/jsontest/src/functions_include.php'; 
 ```
-Since it is done once (when autoload.php is generated), then it does not affect the performance.  
+Since it is done once (when autoload.php is generated), then this feature does not affect the performance because it 
+reads the composer.json files once.  
   
-
-
 
 ## Version
 
+* 1.19.2 2020-06-05
+    * composer.json feature is now optional (and disable by default)   
 * 1.19.1 2020-06-05
     * composer.json autoload-files now it could be excluded via "exclude-path"  
 * 1.19 2020-06-05  
