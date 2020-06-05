@@ -41,12 +41,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.18 2020-04-23
+ * @version   1.19 2020-05-26
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.18';
+    const VERSION = '1.19';
     const JSON_UNESCAPED_SLASHES = 64;
     const JSON_PRETTY_PRINT = 128;
     const JSON_UNESCAPED_UNICODE = 256;
@@ -712,9 +712,9 @@ EOD;
 
     public function listFolderFiles($dir) {
         $arr = [];
-        $this->listFolderFilesAlt($dir, $arr);
-
-        return $arr;
+        $json=[];
+        $this->listFolderFilesAlt($dir, $arr,$json);
+        return [$arr,$json];
     }
 
     private function fixRelative($path) {
@@ -725,7 +725,7 @@ EOD;
         return $path;
     }
 
-    public function listFolderFilesAlt($dir, &$list) {
+    public function listFolderFilesAlt($dir, &$list,&$json) {
         if ($dir === '') {
             return [];
         }
@@ -739,17 +739,42 @@ EOD;
         }
         foreach ($ffs as $ff) {
             if ($ff !== '.' && $ff !== '..') {
+                if($ff==='composer.json') {
+                    $json[] = $list[] = $dir . '/' . $ff;
+                }
                 if ((strlen($ff) >= 5) && substr($ff, -4) == $this->extension) {
                     // PHP_OS_FAMILY=='Windows'
                     $list[] = $dir . '/' . $ff;
                 }
                 if (is_dir($dir . '/' . $ff)) {
-                    $this->listFolderFilesAlt($dir . '/' . $ff, $list);
+                    $this->listFolderFilesAlt($dir . '/' . $ff, $list,$json);
                 }
             }
         }
 
         return $list;
+    }
+    public function parseJSONFile($filename) {
+        try {
+            $filenameFixed=$this->fixRelative($filename).'/composer.json';
+            if (is_file($filenameFixed)) {
+                
+                $content = file_get_contents($filenameFixed);
+            } else {
+                return [];
+            }
+            if ($this->debugMode) {
+                echo $filename . ' trying token...<br>';
+            }
+            $tokens = json_decode($content,true);
+        } catch (Exception $ex) {
+            echo "Error in $filename\n";
+            die(1);
+        }
+        if(isset($tokens['autoload']['files'])) {
+            return $tokens['autoload']['files'];
+        }
+        return [];
     }
 
     /**
@@ -861,11 +886,6 @@ EOD;
                     break;
                 }
             }
-            /*if (substr($path,1,2)==':/') {
-                // windows style c:/somefolder
-                $baseCommon=0;
-            }
-            */
             // moving down the relative path (/../../)
             $c = substr_count(substr($this->baseGen, $baseCommon), '/');
             $r = str_repeat('/..', $c);
@@ -952,22 +972,34 @@ EOD;
         $this->fileGen = $this->fixSeparator($this->fileGen);
         if ($this->rooturl) {
             $this->baseGen = $this->dirNameLinux($this->fileGen . '/' . $this->getFileName());
-            $files = $this->listFolderFiles($this->rooturl);
+            $filesjson = $this->listFolderFiles($this->rooturl);
+            $files=$filesjson[0];
+            /** @var array $json Example['dir/composer.json','folder/composer.json'] */
+            $json=$filesjson[1]; 
             $filesAbsolute = array_fill(0, count($files), false);
+            $jsonAbsolute = array_fill(0, count($json), false);
 
             $extPathArr = explode(',', $this->externalPath);
             foreach ($extPathArr as $ep) {
                 $ep = $this->dirNameLinux($ep, false);
-                $files2 = $this->listFolderFiles($ep);
+                $filesjson2 = $this->listFolderFiles($ep);
+                $files2=$filesjson2[0];
+                $json2=$filesjson2[1]; 
+                foreach ($json2 as $newJson) {
+                    $json[]=$newJson;
+                    $jsonAbsolute[]=true;
+                }
                 foreach ($files2 as $newFile) {
                     $files[] = $newFile;
                     $filesAbsolute[] = true;
                 }
             }
+
             $ns = [];
             $nsAlt = [];
             $pathAbsolute = [];
             $autoruns = [];
+            $autorunsFromJson=[];
             $autorunsFirst = [];
             $excludeNSArr = str_replace(["\n", "\r", ' '], '', $this->excludeNS);
             $excludeNSArr = explode(',', $excludeNSArr);
@@ -980,6 +1012,27 @@ EOD;
 
             $this->result = '';
             if ($this->button) {
+                foreach($json as $key=>$f) {
+                    //echo "running $f<br>";
+                    $f = $this->fixSeparator($f);
+                    $dirOriginal = $this->dirNameLinux($f);
+                    
+                    $jsonE=$this->parseJSONFile($dirOriginal);
+                    //var_dump($jsonE);
+                    foreach($jsonE as $item) {
+                        if (!$jsonAbsolute[$key]) {
+                            $dir = $this->genPath($dirOriginal); //folder/subfolder/f1
+                            $full = $dir.'/'.$item; ///folder/subfolder/f1/F1.php
+                        } else {
+                            $dir = $dirOriginal; //D:/Dropbox/www/currentproject/AutoLoadOne/examples/folder
+                            $full = $dirOriginal.'/'.$item; //D:/Dropbox/www/currentproject/AutoLoadOne/examples/folder/NaturalClass.php
+                        }
+                        $autoruns[] = $full;
+                        $autorunsFromJson[]=$full;
+                        //var_dump($this->baseGen);
+                        //echo "<br>adding autorun $item , $dirOriginal , $dir , $full<br>";
+                    }
+                }
                 foreach ($files as $key => $f) {
                     $f = $this->fixSeparator($f);
                     $runMe = '';
@@ -1089,7 +1142,12 @@ EOD;
                     $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload first</b> found");
                 }
                 foreach ($autoruns as $auto) {
-                    $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload</b> found");
+                    if(in_array($auto,$autorunsFromJson)) {
+                        $this->addLog("Adding file <b>$auto</b> Reason: <b>composer.json</b> found");
+                    } else {
+                        $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload</b> found");    
+                    }
+                    
                 }
                 $autoruns = array_merge($autorunsFirst, $autoruns);
                 $this->result =

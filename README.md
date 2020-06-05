@@ -509,10 +509,46 @@ Deny from all
 </Files>
 ```
 
-* Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account, most of the time as user NOBODY)
+* Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account
+, most of the time as user NOBODY)
+
+
+## Composer.json
+
+Commonly, this library does not need **composer.json**, and it actively ignores its configuration (because it reads the PHP
+ source code directly). However, since 1.19 it reads part of the information of composer.json (for compatibility 
+purpose).  For example, the library **guzzlehttp** uses this feature.   
+  
+Let's say the next file:  
+
+composer.json  
+  
+```json  
+{
+  "autoload": {
+    "psr-4": {
+      "blahblahblah": "some folder blahblahblah/"
+    },
+    "files": ["src/functions_include.php"]
+  }
+}
+```
+
+AutoLoadOne includes the file (or files) declared in composer.json and declared in 'files'.  This file or files is 
+ added to our autoload.php as follows:
+ 
+```php   
+@include __DIR__.'/folder/jsontest/src/functions_include.php'; 
+```
+Since it is done once (when autoload.php is generated), then it does not affect the performance.  
+  
+
+
 
 ## Version
 
+* 1.19 2020-06-05  
+    * Added composer.json 'autoload'/'files'   
 * 1.18 2020-04-23 
     * Some cleaning.
     * The generated file is alsoc cleaned and optimized.   

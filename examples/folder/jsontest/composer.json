@@ -1,0 +1,8 @@
+{
+  "autoload": {
+    "psr-4": {
+      "blahblahblah": "some folder blahblahblah/"
+    },
+    "files": ["src/functions_include.php"]
+  }
+}
