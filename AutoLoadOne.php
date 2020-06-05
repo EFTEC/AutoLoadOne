@@ -41,12 +41,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.19 2020-05-26
+ * @version   1.19.1 2020-05-26
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.19';
+    const VERSION = '1.19.1';
     const JSON_UNESCAPED_SLASHES = 64;
     const JSON_PRETTY_PRINT = 128;
     const JSON_UNESCAPED_UNICODE = 256;
@@ -647,8 +647,21 @@ EOD;
         }
         $includeAbsolute = rtrim($includeAbsolute, ",\n");
         $autorun = ''; //
+
+        $excludePathArr = str_replace(["\n", "\r"], '', $this->excludePath);
+        $excludePathArr = explode(',', $excludePathArr);
+        foreach ($excludePathArr as $key => $item) {
+            $excludePathArr[$key] = trim($item);
+        }
+        
+        
         foreach ($autoruns as $k => $v) {
-            $autorun .= "@include __DIR__.'$v';\n";
+            if($this->inExclusion(dirname($v),$excludePathArr)) {
+                $autorun .= "// @include __DIR__.'$v'; // excluded by path\n";    
+            } else {
+                $autorun .= "@include __DIR__.'$v';\n";
+            }
+            
         }
         // 1024 is the memory used by code, *1.3 is an overhead, usually it's mess.
         $this->statByteUsedCompressed = (strlen($include) + strlen($includeAbsolute) + strlen($custom)) * 1.3 + 1024;
@@ -1024,7 +1037,7 @@ EOD;
                             $dir = $this->genPath($dirOriginal); //folder/subfolder/f1
                             $full = $dir.'/'.$item; ///folder/subfolder/f1/F1.php
                         } else {
-                            $dir = $dirOriginal; //D:/Dropbox/www/currentproject/AutoLoadOne/examples/folder
+                            //$dir = $dirOriginal; //D:/Dropbox/www/currentproject/AutoLoadOne/examples/folder
                             $full = $dirOriginal.'/'.$item; //D:/Dropbox/www/currentproject/AutoLoadOne/examples/folder/NaturalClass.php
                         }
                         $autoruns[] = $full;

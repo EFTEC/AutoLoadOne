@@ -547,8 +547,10 @@ Since it is done once (when autoload.php is generated), then it does not affect 
 
 ## Version
 
+* 1.19.1 2020-06-05
+    * composer.json autoload-files now it could be excluded via "exclude-path"  
 * 1.19 2020-06-05  
-    * Added composer.json 'autoload'/'files'   
+    * Added composer.json {'autoload':{'files':[]}}   
 * 1.18 2020-04-23 
     * Some cleaning.
     * The generated file is alsoc cleaned and optimized.   
