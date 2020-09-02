@@ -90,8 +90,8 @@ class AutoLoadOne
      * AutoLoadOne constructor.
      */
     public function __construct() {
-        $this->fileGen = getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
-        $this->rooturl = getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
+        $this->fileGen = '.'; //getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
+        $this->rooturl = '.'; //getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
         $this->t1 = microtime(true);
         $this->fileConfig =
             basename($_SERVER['SCRIPT_FILENAME']); // the config name shares the same name than the php but with extension .json
@@ -527,6 +527,11 @@ eot;
 
         $template = <<<'EOD'
 <?php
+/** @noinspection PhpUnhandledExceptionInspection
+ * @noinspection PhpMissingParamTypeInspection
+ * @noinspection ClassConstantCanBeUsedInspection
+ */
+ 
 /**
  * This class is used for autocomplete.
  * Class _AUTOLOAD_
@@ -625,7 +630,7 @@ function {{tempname}}__replaceCurlyVariable($string,$arrayName) {
 spl_autoload_register(static function ($class_name) {
     {{tempname}}__auto($class_name);
 });
-// autorun
+// {{autorun_flag}}
 {{autorun}}
 
 EOD;
@@ -681,6 +686,7 @@ EOD;
                                     '{{includeCommon}}',
                                     '{{tempname}}',
                                     '{{autorun}}',
+                                    '{{autorun_flag}}',
                                     '{{version}}',
                                     '{{extension}}',
                                     '{{date}}'
@@ -692,6 +698,9 @@ EOD;
                                     $htmlCommonNameAbs,
                                     uniqid('s'),
                                     $autorun,
+                                    _AUTOLOAD_COMPOSERJSON ? 
+                                        'Autorun: this file was created using _AUTOLOAD_COMPOSERJSON=true'
+                                        :'Autorun: this file was created using _AUTOLOAD_COMPOSERJSON=false so autorun is disabled',
                                     $this::VERSION,
                                     $this->extension,
                                     date('Y/m/d h:i:s')
@@ -989,19 +998,14 @@ EOD;
         $this->fileGen = $this->fixSeparator($this->fileGen);
         if ($this->rooturl) {
             $this->baseGen = $this->dirNameLinux($this->fileGen . '/' . $this->getFileName());
-            $filesjson = $this->listFolderFiles($this->rooturl);
-            $files=$filesjson[0];
-            /** @var array $json Example['dir/composer.json','folder/composer.json'] */
-            $json=$filesjson[1]; 
+            list($files,$json) = $this->listFolderFiles($this->rooturl);
             $filesAbsolute = array_fill(0, count($files), false);
             $jsonAbsolute = array_fill(0, count($json), false);
 
             $extPathArr = explode(',', $this->externalPath);
             foreach ($extPathArr as $ep) {
                 $ep = $this->dirNameLinux($ep, false);
-                $filesjson2 = $this->listFolderFiles($ep);
-                $files2=$filesjson2[0];
-                $json2=$filesjson2[1]; 
+                list($files2,$json2) = $this->listFolderFiles($ep);
                 foreach ($json2 as $newJson) {
                     $json[]=$newJson;
                     $jsonAbsolute[]=true;
@@ -1210,19 +1214,14 @@ EOD;
         switch (true) {
             case $percentage === 0:
                 return 'How?';
-                break;
             case $percentage < 10:
                 return 'Awesome';
-                break;
             case $percentage < 25:
                 return 'Good';
-                break;
             case $percentage < 40:
                 return 'Acceptable';
-                break;
             case $percentage < 80:
                 return 'Bad.';
-                break;
         }
         return 'The worst';
     }
@@ -1390,14 +1389,16 @@ TEM1;
                     <div class="col-sm-10">
                       <input type="text" class="form-control" placeholder="ex. \htdoc\web  or c:\htdoc\web"
                       name="rooturl" value="{{rooturl}}">
-                      <em><b>Examples:</b> Absolute paths: c:\root\folder, c:/root/folder, /root/folder</em>
-                      <em>Relative paths: folder/other, folder\other</em><br>
+                      <em>The root folder to scan files</em><br>
                       <em>Extension scanned: <b>{{extension}}</b></em><br>
                       <em>PHP files that contain the comment <b>@noautoload</b> are ignored</em><br>
-                      <em>The path is case sensitive even in Windows.<br>
-                      <em>PHP files that don't contain a class/interface are ignored. Its allowed to have multiple classes per file</em><br>
-                      <em>PHP files that contain the comment <b>"@autorun"</b> are executed (even if they don't have a class)</em><br>
-                      <em>PHP files that contain the comment <b>"@autorun first"</b> are executed with priority</em><br>
+                      <em>The path used here is case sensitive, even in Windows.<br>
+                      <em>PHP files that don't contain a class/interface are ignored.</em><br>
+                      {{autorun_enable}}<br>
+                      <em><b>Examples:</b>
+                      <br>Absolute paths: <b>c:\root\folder</b>,
+                       <b>c:/root/folder</b>, <b>/root/folder</b><br>
+                      Relative paths: <b>folder/other</b>, <b>folder\other</b><br></em>
                     </div>
                   </div>
                   <div class="form-group">
@@ -1407,9 +1408,12 @@ TEM1;
                       </label>
                     </div>
                     <div class="col-sm-10">
-                      <input type="text" class="form-control" placeholder="ex. /etc/httpd/web or c:\apache\htdoc"
+                      <input type="text" class="form-control" 
+                        placeholder="ex. /etc/httpd/web or c:\apache\htdoc"
                       name="fileGen" value="{{fileGen}}">
-                      <em>Full/relative path (local file) where the autoload{{extension}} will be generated.<br>
+                      <em>Full or relative path (local file) where the autoload{{extension}}
+                       will be generated.<br>
+                       <b>Example:</b><br><b>/etc/httpd/web</b>,<b>c:\apache\htdoc</b><br>
                       Note: This path is also used to determine the relativity of the includes</em>
                     </div>
                   </div>
@@ -1427,7 +1431,7 @@ TEM1;
                         <label>
                           <input type="checkbox" name="savefile" value="1" {{savefile}}>Save File</label>
                       </div>                      
-                      <em>The php file that will be generated. You could generate it manually (copy and paste the result)<br>
+                      <em>The PHP file that we want to generate. You could generate it manually (copy and paste the result)<br>
                     </div>
                   </div>
                   <div class="form-group">
@@ -1438,12 +1442,12 @@ TEM1;
                     </div>
                     <div class="col-sm-10">
                       <textarea class="form-control" rows="5" name="externalPath">{{externalPath}}</textarea>
-                      <em>Folder(s) of the external library without trailing "/" separated by comma or a new line. Example
-                      /mynamespace,/mynamespace2<br>The folders will be added as absolute path however
-                      , it's possible to use a relative path. Example:<br>
-                      C:\temp\folder<br>
-                      /folder/somefolder<br>
-                      ../../mapache-commons\lib</em></div>
+                      <em>Folder(s) of the external library without trailing "/" separated by comma or in a new line.<br>
+                      The folders will be stored as an absolute path however, it's possible to use a relative path.<br>
+                      <b>Example:</b><br>
+                      <b>C:\temp\folder</b><br>
+                      <b>/folder/somefolder</b><br>
+                      <b>../../mapache-commons\lib</b> (relative path to the result folder)</em></div>
                   </div>                                
                   <div class="form-group">
                     <div class="col-sm-2">
@@ -1453,9 +1457,9 @@ TEM1;
                     </div>
                     <div class="col-sm-10">
                       <textarea class="form-control" rows="5" name="excludeNS">{{excludeNS}}</textarea>
-                      <em>Namespaces without trailing "/" separated by comma or a new line. It includes local and external folders.                      
-                        <br>Example
-                      /mynamespace,/mynamespace2</em></div>
+                      <em>Namespaces without trailing "/" separated by comma or in a new line. It includes local and external folders.                      
+                        <br><b>Example:</b><br>
+                      <b>/mynamespace</b>,<b>/mynamespace2/subnamespace</b></em></div>
                   </div>
                   <div class="form-group">
                     <div class="col-sm-2">
@@ -1463,12 +1467,12 @@ TEM1;
                     </div>
                     <div class="col-sm-10">
                       <textarea class="form-control" rows="5" name="excludePath">{{excludePath}}</textarea>
-                      <em>Relative path without trailing "/" separated by comma or a new line. 
-                       <br>Example
-                      vendor/pchart/class</em><br>
-                      <em>You could also use wildcards :<br>
-                       /path* for any folder that starts with "/path*,"path/folder".."<br>
-                       */path for any folder that ends with "*/path"</em></div>
+                      <em>The relative path without trailing "/" separated by comma or in a new line.
+                       You could also use the wildcard (*).
+                       <br><b>Example:</b><br>
+                      <b>vendor/pchart/class</b> Exclude the folder but not the subfolders.<br>
+                       <b>/path*</b> for any folder that starts with "/path*,"path/folder".."<br>
+                       <b>*/path</b> for any folder that ends with "*/path"</em></div>
                   </div>
                   <div class="form-group">
                     <div class="col-sm-2">
@@ -1554,6 +1558,7 @@ TEM1;
 
             $web = str_replace(array(
                                    '{{rooturl}}',
+                                   '{{autorun_enable}}',
                                    '{{fileGen}}',
                                    '{{extension}}',
                                    '{{excludeNS}}',
@@ -1569,6 +1574,9 @@ TEM1;
                                    '{{result}}'
                                ), array(
                                    $this->rooturl,
+                                   _AUTOLOAD_COMPOSERJSON ?  '<em><b></b>_AUTOLOAD_COMPOSERJSON=true</b> Composer.json autorun is considered. PHP files that contain the comment <b>"@autorun"</b> are executed (even if they don\'t have a class)</em><br>
+                                        <em>PHP files that contain the comment <b>"@autorun first"</b> are executed with priority</em><br>'
+                                   :'<em><b>_AUTOLOAD_COMPOSERJSON=false</b>. @autorun flag and composer.json autorun are not considered</em>',
                                    $this->fileGen,
                                    $this->extension,
                                    $this->excludeNS,

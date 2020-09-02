@@ -555,6 +555,10 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.20 2020-09-02
+    * some cleanups.  
+    * The GUI has some examples.  
+    * _AUTOLOAD_COMPOSERJSON is indicated where it is executed or not.   
 * 1.19.2 2020-06-05
     * composer.json feature is now optional (and disable by default)   
 * 1.19.1 2020-06-05
