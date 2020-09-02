@@ -45,12 +45,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.19.2 2020-05-26
+ * @version   1.20 2020-09-2
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.19.2';
+    const VERSION = '1.20';
     const JSON_UNESCAPED_SLASHES = 64;
     const JSON_PRETTY_PRINT = 128;
     const JSON_UNESCAPED_UNICODE = 256;
