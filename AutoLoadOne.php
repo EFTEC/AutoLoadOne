@@ -167,12 +167,12 @@ eot;
             echo "------------------------------------------------------------------\n";
         } else {
             $this->getAllParametersCli();
-            $this->fileGen = ($this->fileGen == '') ? getcwd() : $this->fileGen;
+            $this->fileGen = ($this->fileGen == '') ? '.'  : $this->fileGen; //getcwd()
             $this->button = 1;
         }
         if ($this->current) {
-            $this->rooturl = getcwd();
-            $this->fileGen = getcwd();
+            $this->rooturl = '.'; //getcwd();
+            $this->fileGen = '.'; //getcwd();
             $this->savefile = 1;
             $this->savefileName = 'autoload.php';
             $this->stop = 0;
