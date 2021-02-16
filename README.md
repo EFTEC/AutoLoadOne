@@ -556,6 +556,8 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.21.1 2021-02-15
+    * fixed composer.json (wrong number)
 * 1.21 2021-02-15
     * Fixed a big problem with linux. It used basename(), but it works diffently in Linux and Windows. Now, it works in
       Linux.
