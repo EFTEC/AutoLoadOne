@@ -556,6 +556,8 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.21.2 2021-02-15
+    * Removed wrong "']" characters.
 * 1.21.1 2021-02-15
     * fixed composer.json (wrong number)
 * 1.21 2021-02-15

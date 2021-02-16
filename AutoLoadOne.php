@@ -571,7 +571,7 @@ function {{tempname}}__auto($class_name)
     // its called only if the class is not loaded.
     $ns = dirname($class_name); // without trailing
     $ns = ($ns === '.') ? '' : $ns;
-    $cls = explode($class_name'],'\\');
+    $cls = explode($class_name,'\\');
     $cls = end($cls);
     // special cases
     if (isset($GLOBALS['{{tempname}}__arrautoloadCustom'][$class_name])) {
