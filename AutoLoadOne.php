@@ -45,12 +45,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.20 2020-09-2
+ * @version   1.21 2021-02-15
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.20';
+    const VERSION = '1.21';
     const JSON_UNESCAPED_SLASHES = 64;
     const JSON_PRETTY_PRINT = 128;
     const JSON_UNESCAPED_UNICODE = 256;
@@ -93,8 +93,8 @@ class AutoLoadOne
         $this->fileGen = '.'; //getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
         $this->rooturl = '.'; //getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
         $this->t1 = microtime(true);
-        $this->fileConfig =
-            basename($_SERVER['SCRIPT_FILENAME']); // the config name shares the same name than the php but with extension .json
+        $tmpArr=explode('\\',$_SERVER['SCRIPT_FILENAME']);
+        $this->fileConfig =end($tmpArr); // the config name shares the same name than the php but with extension .json
         $this->fileConfig = getcwd() . '/' . str_replace($this->extension, '.json', $this->fileConfig);
         //var_dump($this->fileConfig);
     }
@@ -571,7 +571,8 @@ function {{tempname}}__auto($class_name)
     // its called only if the class is not loaded.
     $ns = dirname($class_name); // without trailing
     $ns = ($ns === '.') ? '' : $ns;
-    $cls = basename($class_name);
+    $cls = explode($class_name'],'\\');
+    $cls = end($cls);
     // special cases
     if (isset($GLOBALS['{{tempname}}__arrautoloadCustom'][$class_name])) {
         {{tempname}}__loadIfExists($GLOBALS['{{tempname}}__arrautoloadCustom'][$class_name]
@@ -607,7 +608,7 @@ function {{tempname}}__loadIfExists($filename, $key,$arrayName='')
     /** @noinspection PhpIncludeInspection */
     if ((@include $fullFile) === false) {
         if ($GLOBALS['{{tempname}}__debug']) {
-            throw new RuntimeException('AutoLoadOne Error: Loading file [' . __DIR__ . '/' . $filename . '] for class [' . basename($filename) .
+            throw new RuntimeException('AutoLoadOne Error: Loading file [' . __DIR__ . '/' . $filename . '] for class [' . $filename .
                                  ']');
         }
         throw new RuntimeException('AutoLoadOne Error: No file found.');
@@ -1068,7 +1069,9 @@ EOD;
                         $full = $f; //D:/Dropbox/www/currentproject/AutoLoadOne/examples/folder/NaturalClass.php
                     }
                     $urlFull = $this->dirNameLinux($full); ///folder/subfolder/f1
-                    $basefile = basename($f); //F1.php
+                    $tmpArr=explode('\\',$f); //F1.php
+                    $basefile =end($tmpArr); // the config name shares the same name than the php but with extension .json
+
 
                     // echo "$dir $full $urlFull $basefile<br>";
 
