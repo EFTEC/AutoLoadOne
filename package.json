@@ -1,6 +1,6 @@
 {
   "name": "autoloadone",
-  "version": "1.21",
+  "version": "1.21.1",
   "description": "PHP library for generate auto load class",
   "main": "vendor/AutoLoadOne.php",
   "directories": {

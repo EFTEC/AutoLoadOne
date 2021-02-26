@@ -556,6 +556,8 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.22.1 2021-02-26
+    * fixed an error in the code
 * 1.22 2021-02-26
     * Another fix (it failed to save the configuration file. It failed to use the same path for multiple classes)
     * Configuration now it is stored in the same file autoload.php.  The old file is still could be used but only if 
