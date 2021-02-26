@@ -45,12 +45,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.22.1 2021-02-26
+ * @version   1.22.2 2021-02-26
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.22.1';
+    const VERSION = '1.22.2';
 
 
     public $rooturl = '';

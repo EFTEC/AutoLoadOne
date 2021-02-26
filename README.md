@@ -556,6 +556,8 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.22.2 2021-02-26
+    * fixed composer.json
 * 1.22.1 2021-02-26
     * fixed an error in the code
 * 1.22 2021-02-26
