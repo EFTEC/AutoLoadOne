@@ -45,12 +45,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.22.2 2021-02-26
+ * @version   1.23 2021-02-26
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.22.2';
+    const VERSION = '1.23';
 
 
     public $rooturl = '';
@@ -548,10 +548,14 @@ ${{tempname}}__arrautoloadAbsolute = [
 function {{tempname}}__auto($class_name)
 {
     // its called only if the class is not loaded.
-    $ns = dirname($class_name); // without trailing
-    $ns = ($ns === '.') ? '' : $ns;
-    $cls = explode('\\',$class_name);
-    $cls = end($cls);
+    $p=strrpos($class_name,'\\');
+    if($p!==false) {
+        $ns=substr($class_name,0,$p);
+        $cls=substr($class_name,$p+1);
+    } else {
+        $ns='';
+        $cls=$class_name;
+    }
     // special cases
     if (isset($GLOBALS['{{tempname}}__arrautoloadCustom'][$class_name])) {
         {{tempname}}__loadIfExists($GLOBALS['{{tempname}}__arrautoloadCustom'][$class_name]
