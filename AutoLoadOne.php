@@ -13,7 +13,7 @@ namespace eftec\AutoLoadOne;
 
 //*************************************************************
 use Exception;
-use RuntimeException;
+
 
 if (!defined('_AUTOLOAD_USER')) {
     define('_AUTOLOAD_USER', 'autoloadone');
@@ -45,15 +45,13 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.21 2021-02-15
+ * @version   1.22 2021-02-26
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.21';
-    const JSON_UNESCAPED_SLASHES = 64;
-    const JSON_PRETTY_PRINT = 128;
-    const JSON_UNESCAPED_UNICODE = 256;
+    const VERSION = '1.22';
+
 
     public $rooturl = '';
     public $fileGen = '';
@@ -93,10 +91,9 @@ class AutoLoadOne
         $this->fileGen = '.'; //getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
         $this->rooturl = '.'; //getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
         $this->t1 = microtime(true);
-        $tmpArr=explode('\\',$_SERVER['SCRIPT_FILENAME']);
+        $tmpArr=explode('/',$_SERVER['SCRIPT_FILENAME']); // it always returns with linux separators.
         $this->fileConfig =end($tmpArr); // the config name shares the same name than the php but with extension .json
-        $this->fileConfig = getcwd() . '/' . str_replace($this->extension, '.json', $this->fileConfig);
-        //var_dump($this->fileConfig);
+        $this->fileConfig =$this->dirNameLinux(getcwd()) . '/' . str_replace($this->extension, '.json', $this->fileConfig);
     }
 
     private function getAllParametersCli() {
@@ -194,57 +191,8 @@ eot;
         echo "------------------------------------------------------------------\n";
     }
 
-    public static function encode($data, $options = 448) {
-        if (PHP_VERSION_ID >= 50400) {
-            $json = json_encode($data, $options);
-            if (false === $json) {
-                self::throwEncodeError(json_last_error());
-            }
 
-            if (PHP_VERSION_ID < 50428 || (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 50512) ||
-                (defined('JSON_C_VERSION') && version_compare(phpversion('json'), '1.3.6', '<'))) {
-                $json = preg_replace('/\[\s+]/', '[]', $json);
-                $json = preg_replace('/{\s+}/', '{}', $json);
-            }
 
-            return $json;
-        }
-
-        $json = json_encode($data);
-        if (false === $json) {
-            self::throwEncodeError(json_last_error());
-        }
-
-        $prettyPrint = (bool)($options & self::JSON_PRETTY_PRINT);
-        $unescapeUnicode = (bool)($options & self::JSON_UNESCAPED_UNICODE);
-        $unescapeSlashes = (bool)($options & self::JSON_UNESCAPED_SLASHES);
-
-        if (!$prettyPrint && !$unescapeUnicode && !$unescapeSlashes) {
-            return $json;
-        }
-
-        return self::format($json, $unescapeUnicode, $unescapeSlashes);
-    }
-
-    private static function throwEncodeError($code) {
-        switch ($code) {
-            case JSON_ERROR_DEPTH:
-                $msg = 'Maximum stack depth exceeded';
-                break;
-            case JSON_ERROR_STATE_MISMATCH:
-                $msg = 'Underflow or the modes mismatch';
-                break;
-            case JSON_ERROR_CTRL_CHAR:
-                $msg = 'Unexpected control character found';
-                break;
-            case JSON_ERROR_UTF8:
-                $msg = 'Malformed UTF-8 characters, possibly incorrectly encoded';
-                break;
-            default:
-                $msg = 'Unknown error';
-        }
-        throw new RuntimeException('JSON encoding failed: ' . $msg);
-    }
 
     public static function format($json, $unescapeUnicode, $unescapeSlashes) {
         $result = '';
@@ -341,28 +289,35 @@ eot;
             return false;
         }
         $param = [];
-        $param['rooturl'] = $this->rooturl;
-        $param['fileGen'] = $this->fileGen;
+        $currentPath=$this->dirNameLinux(getcwd(),false);
+
+        $param['rooturl'] = $this->rooturl===$currentPath?'.':$this->rooturl;
+        $param['fileGen'] = $this->fileGen===$currentPath?'.':$this->fileGen;
         $param['savefile'] = $this->savefile;
         $param['compression'] = $this->compression;
         $param['savefileName'] = $this->savefileName;
         $param['excludeNS'] = $this->excludeNS;
         $param['excludePath'] = $this->excludePath;
         $param['externalPath'] = $this->externalPath;
-        $remote = [];
-        $remote['rooturl'] = '';
-        $remote['destination'] = $this->fileGen;
-        $remote['name'] = '';
-        $remoteint = '1';
-        $generatedvia = 'AutoloadOne';
-        $date = date('Y/m/d h:i');
 
-        return @file_put_contents($this->fileConfig, self::encode([
-                                                                      'application' => $generatedvia,
-                                                                      'generated' => $date,
-                                                                      'local' => $param,
-                                                                      'remote' => [$remoteint => $remote]
-                                                                  ]));
+        $fullPHP = @file_get_contents($this->savefileName);
+        if ($fullPHP === false) {
+            return false;
+        }
+        $a1=strpos($fullPHP,'/* -- CONFIG START HERE --');
+        if($a1===false) {
+            return false;
+        }
+        $a1+=strlen('/* -- CONFIG START HERE --');
+        $a2=strpos($fullPHP,"\n-- CONFIG END HERE -- */",$a1);
+        if($a2===false) {
+            return false;
+        }
+        $txt=substr($fullPHP,0,$a1)."\n"
+            .json_encode($param,JSON_PRETTY_PRINT+JSON_UNESCAPED_SLASHES+JSON_UNESCAPED_UNICODE ).
+            substr($fullPHP,$a2);
+
+        return @file_put_contents($this->savefileName,$txt);
     }
 
     /**
@@ -372,19 +327,43 @@ eot;
         if (!_AUTOLOAD_SAVEPARAM) {
             return false;
         }
-        $txt = @file_get_contents($this->fileConfig);
-        if ($txt === false) {
+        $fullPHP = @file_get_contents($this->savefileName);
+        if ($fullPHP === false) {
+            $fullPHP='';
+        }
+        $a1=strpos($fullPHP,'/* -- CONFIG START HERE --');
+        if($a1===false) {
+            // we try the old method (json file if exists)
+
+            $oldMethod=@file_get_contents($this->fileConfig);
+            if(!$oldMethod) {
+                return false;
+            }
+            $this->addLog('Reading the configuration using the old method '.$this->fileConfig.' (you could delete this file)','error');
+            $param = json_decode($oldMethod, true);
+            $param=isset($param['local'])?$param['local']:null;
+        } else {
+            $a1+=strlen('/* -- CONFIG START HERE --');
+            $a2=strpos($fullPHP,'-- CONFIG END HERE -- ',$a1);
+            if($a2===false) {
+                return false;
+            }
+            $txt=trim(substr($fullPHP,$a1,$a2-$a1));
+            $param = json_decode($txt, true);
+        }
+
+
+        if($param===null) {
             return false;
         }
-        $param = json_decode($txt, true);
-        $this->fileGen = @$param['local']['fileGen'];
+        $this->fileGen = @$param['fileGen'];
         $this->fileGen = ($this->fileGen === '.') ? $this->rooturl : $this->fileGen;
-        $this->savefile = @$param['local']['savefile'];
-        $this->compression = @$param['local']['compression'];
-        $this->savefileName = @$param['local']['savefileName'];
-        $this->excludeNS = @$param['local']['excludeNS'];
-        $this->excludePath = @$param['local']['excludePath'];
-        $this->externalPath = @$param['local']['externalPath'];
+        $this->savefile = @$param['savefile'];
+        $this->compression = @$param['compression'];
+        $this->savefileName = @$param['savefileName'];
+        $this->excludeNS = @$param['excludeNS'];
+        $this->excludePath = @$param['excludePath'];
+        $this->externalPath = @$param['externalPath'];
         return true;
     }
 
@@ -410,8 +389,11 @@ eot;
             if (!$this->button) {
                 $loadOk = $this->loadParam();
                 if ($loadOk === false) {
-                    $this->addLog('Unable to load configuration file <b>' . $this->fileConfig .
+                    $this->addLog('Unable to load configuration file <b>' . $this->savefileName .
                                   '</b>. It is not obligatory', 'warning');
+                } else {
+                    $this->addLog('Configuration loaded <b>' . $this->savefileName .
+                        '</b>.', 'info');
                 }
             } else {
                 $this->debugMode = isset($_GET['debug']);
@@ -431,11 +413,6 @@ eot;
                 $this->savefileName = (@$_POST['savefileName']) ?: $this->savefileName;
                 $this->stop = @$_POST['stop'];
                 $this->compression = @$_POST['compression'];
-                $ok = $this->saveParam();
-                if ($ok === false) {
-                    $this->addLog('Unable to save configuration file <b>' . $this->fileConfig .
-                                  '</b>. It is not obligatory.', 'warning');
-                }
             }
             if ($this->button === 'logout') {
                 @session_destroy();
@@ -531,7 +508,9 @@ eot;
  * @noinspection PhpMissingParamTypeInspection
  * @noinspection ClassConstantCanBeUsedInspection
  */
- 
+/* -- CONFIG START HERE --
+-- CONFIG END HERE -- */
+
 /**
  * This class is used for autocomplete.
  * Class _AUTOLOAD_
@@ -712,12 +691,22 @@ EOD;
             $ok = @file_put_contents($file, $template);
             if ($ok) {
                 $this->addLog("File <b>$file</b> generated", 'info');
+
+                $ok = $this->saveParam();
+                if ($ok === false) {
+                    $this->addLog('Unable to save configuration file <b>' . $file .
+                        '</b>. It is not obligatory.', 'warning');
+                }
+
             } else {
                 $this->addLog("Unable to write file <b>$file</b>. Check the folder and permissions. You could write it manually.",
                               'error');
                 $this->statError++;
             }
             $this->addLog('&nbsp;');
+
+
+
         }
 
         return $template;
@@ -848,10 +837,6 @@ EOD;
         }
         $nameSpace = '';
         $className = '';
-        /*echo "<pre>";
-        var_dump($tokens);
-        echo "</pre>";
-        */
         foreach ($tokens as $p => $token) {
             if (is_array($token) && $token[0] == T_NAMESPACE) {
                 // We found a namespace
@@ -947,6 +932,10 @@ EOD;
         return $dir;
     }
 
+    /**
+     * @param mixed $txt The message to show
+     * @param string $type=['error','warning','info','success','stat','statinfo','staterror'][$i]
+     */
     public function addLog($txt, $type = '') {
         if (PHP_SAPI === 'cli') {
             echo "\t" . $txt . "\n";
@@ -1038,9 +1027,7 @@ EOD;
                     //echo "running $f<br>";
                     $f = $this->fixSeparator($f);
                     $dirOriginal = $this->dirNameLinux($f);
-                    
                     $jsonE=$this->parseJSONFile($dirOriginal);
-                    //var_dump($jsonE);
                     foreach($jsonE as $item) {
                         if (!$jsonAbsolute[$key]) {
                             $dir = $this->genPath($dirOriginal); //folder/subfolder/f1
@@ -1051,8 +1038,6 @@ EOD;
                         }
                         $autoruns[] = $full;
                         $autorunsFromJson[]=$full;
-                        //var_dump($this->baseGen);
-                        //echo "<br>adding autorun $item , $dirOriginal , $dir , $full<br>";
                     }
                 }
                 foreach ($files as $key => $f) {
@@ -1069,12 +1054,8 @@ EOD;
                         $full = $f; //D:/Dropbox/www/currentproject/AutoLoadOne/examples/folder/NaturalClass.php
                     }
                     $urlFull = $this->dirNameLinux($full); ///folder/subfolder/f1
-                    $tmpArr=explode('\\',$f); //F1.php
+                    $tmpArr=explode('/',$f); //F1.php
                     $basefile =end($tmpArr); // the config name shares the same name than the php but with extension .json
-
-
-                    // echo "$dir $full $urlFull $basefile<br>";
-
                     if ($runMe != '') {
                         switch ($runMe) {
                             case '@autorun first':
