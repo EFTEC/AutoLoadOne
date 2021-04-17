@@ -24,7 +24,7 @@ AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use 
 
 > <b>NOTE:</b> If you run the dev-distro, then you must exclude the example/ folder because it contains @autorun tags.  
 
-**Last Update Apr 26, 2020**
+**Last Update 17 Abril, 2021**
 
 > "Universal Autoloading classes in PHP, any class, any time!"
 
@@ -74,7 +74,21 @@ For example /someuser/myproject/ allows to include libraries from the folder /ot
 
 ## Getting started
 
-You could run directly AutoLoadOne.php (via web of via CLI) or you could create a file that calls it.
+You could run directly AutoLoadOne.php (via web of via CLI), or you could create a file that calls it.
+
+## Usage using the CLI
+
+You must execute it in the root folder, and it will generate a file called autoload.php.
+
+```shell
+php AutoLoadOne.php -generate
+```
+> If AutoLoadOne.php is not in the same folder then you can copy it, or set the path to use it 
+> php /somefolder/AutoLoadOne.php -generate
+> There are more commands that you can use but -generate is the basic and out-out-the-box experience.
+
+
+## Usage via code
 
 * Copy AutoLoadOne.php in the root folder (recommended) of your project
 * Execute it directly or
@@ -93,6 +107,7 @@ $auto->init();
 $auto->process();
 $auto->render();
 ```
+
 
 
 ## Usage (generate code via Web)
@@ -556,6 +571,10 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.24 2021-04-17
+    * [cli] Re-colored the CLI.   
+    * [code] Some cleanups in the code.
+    * [fix] Now the generated file shows the correct hour.
 * 1.23 2021-02-26
     * Updatted the file generated. 
 * 1.22.2 2021-02-26
