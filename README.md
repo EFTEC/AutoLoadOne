@@ -85,7 +85,7 @@ php AutoLoadOne.php -generate
 ```
 > If AutoLoadOne.php is not in the same folder then you can copy it, or set the path to use it 
 > php /somefolder/AutoLoadOne.php -generate
-> There are more commands that you can use but -generate is the basic and out-out-the-box experience.
+> There are more commands that you can use but -generate is the basic and out-the-box experience.
 
 
 ## Usage via code
@@ -571,6 +571,8 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.25 2021-04-17
+    * A better error management. Now, it shows the line of the error in a custom trace.
 * 1.24 2021-04-17
     * [cli] Re-colored the CLI.   
     * [code] Some cleanups in the code.
