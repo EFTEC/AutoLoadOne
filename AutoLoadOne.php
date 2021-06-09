@@ -45,12 +45,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.25 2021-04-17
+ * @version   1.25.1 2021-06-09
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.25';
+    const VERSION = '1.25.1';
 
 
     public $rooturl = '';
@@ -1089,8 +1089,10 @@ function autoloadone_exception_handler($exception) {
         $r .= "Trace:\n";
         foreach ($exception->getTrace() as $error) {
             // we remove all trace pointing to this file.
-            if (strpos($error['file'], __FILE__) === false) {
-                $r .= $error['file'] . '[' . $error['line'] . ']' . ' function:' . @$error['function'] . '(' . @implode(',', @$error['args']) . ')' . "\n";
+            if (isset($error['file']) && strpos($error['file'], __FILE__) === false) {
+                $r .= $error['file'] . '[' . $error['line'] . ']' . ' function:' . @$error['function'] . '('
+                    .( is_array(@$error['args']) ? @implode(',', @$error['args']) . ')' : @$error['args'])
+                    . "\n";
             }
         }
     }
@@ -1100,6 +1102,7 @@ function autoloadone_exception_handler($exception) {
     echo $r;
     die(1);
 }
+
 
 
 spl_autoload_register(static function ($class_name) {

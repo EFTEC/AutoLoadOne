@@ -571,6 +571,8 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.25.1 2021-06-09
+    * [fix] in autoloadone_exception_handler when the arguments of the error is not an array but a string.
 * 1.25 2021-04-17
     * A better error management. Now, it shows the line of the error in a custom trace.
 * 1.24 2021-04-17
