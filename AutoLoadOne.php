@@ -571,7 +571,7 @@ eot;
                     }
                     $urlFull = $this->dirNameLinux($full); ///folder/subfolder/f1
                     $tmpArr = explode('/', $f); //F1.php
-                    $basefile = end($tmpArr); // the config name shares the same name than the php but with extension .json
+                    $basefile = end($tmpArr); // the config name shares the same name as the php but with extension .json
                     if ($runMe != '') {
                         switch ($runMe) {
                             case '@autorun first':
@@ -886,7 +886,7 @@ eot;
             }
 
             $isClass = false;
-            // A class is defined by a T_CLASS + an space + name of the class.
+            // A class is defined by a T_CLASS + a space + name of the class.
             if (is_array($token) && ($token[0] == T_CLASS || $token[0] == T_INTERFACE || $token[0] == T_TRAIT) &&
                 is_array($tokens[$p + 1]) && $tokens[$p + 1][0] == T_WHITESPACE) {
                 $isClass = true;
