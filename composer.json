@@ -11,15 +11,13 @@
       "name": "Jorge Patricio Castro Castillo",
       "email": "jcastro@eftec.cl"
     }],
-  "config": {
-    "platform": {
-      "php": "5.6"
-    }
-  },
   "require": {
     "ext-json": "*",
-    "php":">=5.6"
+    "php":">=7.2.5"
   },
+  "bin": [
+    "autoloadone"
+  ],
   "archive": {
     "exclude": ["/examples"]
   }

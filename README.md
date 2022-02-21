@@ -571,6 +571,10 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.26 2022-02-21
+    * [fix] compatibility with PHP 8.1. 
+    * Raising the compatibility with php 7.1.5 and higher. If you want to use an old version, then you can use 1.25.1
+    * Adding AutoLoadOne as a composer's binary file.
 * 1.25.1 2021-06-09
     * [fix] in autoloadone_exception_handler when the arguments of the error is not an array but a string.
 * 1.25 2021-04-17

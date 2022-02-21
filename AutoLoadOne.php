@@ -45,12 +45,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.25.1 2021-06-09
+ * @version   1.26 2022-02-21
  * @noautoload
  */
 class AutoLoadOne
 {
-    const VERSION = '1.25.1';
+    public const VERSION = '1.26';
 
 
     public $rooturl = '';
@@ -93,7 +93,7 @@ class AutoLoadOne
         $this->rooturl = '.'; //getcwd(); // dirname($_SERVER['SCRIPT_FILENAME']);
         $this->t1 = microtime(true);
         $tmpArr = explode('/', $_SERVER['SCRIPT_FILENAME']); // it always returns with linux separators.
-        $this->fileConfig = end($tmpArr); // the config name shares the same name than the php but with extension .json
+        $this->fileConfig = end($tmpArr); // the config name shares the same name as the php but with extension .json
         $this->fileConfig = $this->dirNameLinux(getcwd()) . '/' . str_replace($this->extension, '.json', $this->fileConfig);
     }
 
@@ -105,7 +105,7 @@ class AutoLoadOne
      *
      * @return string
      */
-    public function dirNameLinux($url, $ifFullUrl = true)
+    public function dirNameLinux($url, bool $ifFullUrl = true): string
     {
         $url = trim($url);
         $dir = ($ifFullUrl) ? dirname($url) : $url;
@@ -119,7 +119,8 @@ class AutoLoadOne
         return str_replace('\\', '/', $fullUrl); // replace windows path for linux path.
     }
 
-    public static function format($json, $unescapeUnicode, $unescapeSlashes)
+    /** @noinspection PhpUnused */
+    public static function format($json, $unescapeUnicode, $unescapeSlashes): string
     {
         $result = '';
         $pos = 0;
@@ -203,7 +204,7 @@ class AutoLoadOne
         return $result;
     }
 
-    public function init()
+    public function init(): void
     {
         $this->log = '';
         $this->logStat = '';
@@ -219,7 +220,7 @@ class AutoLoadOne
         }
     }
 
-    private function initSapi()
+    private function initSapi(): void
     {
         global $argv;
         $v = $this::VERSION . ' (c) Jorge Castro';
@@ -274,7 +275,7 @@ eot;
         echo "------------------------------------------------------------------\n";
     }
 
-    private function getAllParametersCli()
+    private function getAllParametersCli(): void
     {
         $this->rooturl = $this->fixSeparator($this->getParameterCli('folder'));
         $this->fileGen = $this->fixSeparator($this->getParameterCli('filegen'));
@@ -296,7 +297,7 @@ eot;
      *
      * @return string
      */
-    private function getParameterCli($key, $default = '')
+    private function getParameterCli($key, string $default = ''): string
     {
         global $argv;
         $p = array_search('-' . $key, $argv, true);
@@ -313,12 +314,12 @@ eot;
         return '';
     }
 
-    private function removeTrailSlash($txt)
+    private function removeTrailSlash($txt): string
     {
         return rtrim($txt, '/\\');
     }
 
-    private function initWeb()
+    private function initWeb(): void
     {
         @ob_start();
         // Not in cli-mode
@@ -377,7 +378,7 @@ eot;
     /**
      * @return bool
      */
-    private function loadParam()
+    private function loadParam(): bool
     {
         if (!_AUTOLOAD_SAVEPARAM) {
             return false;
@@ -396,7 +397,7 @@ eot;
             }
             $this->addLog('Reading the configuration using the old method ' . $this->fileConfig . ' (you could delete this file)', 'error');
             $param = json_decode($oldMethod, true);
-            $param = isset($param['local']) ? $param['local'] : null;
+            $param = $param['local'] ?? null;
         } else {
             $a1 += strlen('/* -- CONFIG START HERE --');
             $a2 = strpos($fullPHP, '-- CONFIG END HERE -- ', $a1);
@@ -426,7 +427,7 @@ eot;
      * @param mixed  $txt  The message to show
      * @param string $type =['error','warning','info','success','stat','statinfo','staterror'][$i]
      */
-    public function addLog($txt, $type = '')
+    public function addLog($txt, string $type = ''): void
     {
         if (PHP_SAPI === 'cli') {
             $txt = str_replace(array('<b>', '<i>', '</b>', '</i>'), array("\033[1m", "\033[4m", "\033[0m", "\033[0m"), $txt);
@@ -487,7 +488,7 @@ eot;
      *
      * @return string
      */
-    private function cleanInputFolder($value)
+    private function cleanInputFolder($value): string
     {
         // remove windows line carriage
         // remove previous ,\n if any and converted into \n. It avoids duplicate ,,\n
@@ -497,20 +498,20 @@ eot;
         return str_replace(array("\r\n", ",\n", "\n", '\\,', '/,'), array("\n", "\n", ",\n", ',', ','), $value);
     }
 
-    public function process()
+    public function process(): void
     {
         $this->rooturl = $this->fixSeparator($this->rooturl);
         $this->fileGen = $this->fixSeparator($this->fileGen);
         if ($this->rooturl) {
             $this->baseGen = $this->dirNameLinux($this->fileGen . '/' . $this->getFileName());
-            list($files, $json) = $this->listFolderFiles($this->rooturl);
+            [$files, $json] = $this->listFolderFiles($this->rooturl);
             $filesAbsolute = array_fill(0, count($files), false);
             $jsonAbsolute = array_fill(0, count($json), false);
 
             $extPathArr = explode(',', $this->externalPath);
             foreach ($extPathArr as $ep) {
                 $ep = $this->dirNameLinux($ep, false);
-                list($files2, $json2) = $this->listFolderFiles($ep);
+                [$files2, $json2] = $this->listFolderFiles($ep);
                 foreach ($json2 as $newJson) {
                     $json[] = $newJson;
                     $jsonAbsolute[] = true;
@@ -715,7 +716,7 @@ eot;
      *
      * @return string
      */
-    public function getFileName()
+    public function getFileName(): string
     {
         if (strpos($this->savefileName, '.php') === false) {
             return $this->savefileName . $this->extension;
@@ -724,7 +725,7 @@ eot;
         return $this->savefileName;
     }
 
-    public function listFolderFiles($dir)
+    public function listFolderFiles($dir): array
     {
         $arr = [];
         $json = [];
@@ -732,7 +733,7 @@ eot;
         return [$arr, $json];
     }
 
-    public function listFolderFilesAlt($dir, &$list, &$json)
+    public function listFolderFilesAlt($dir, &$list, &$json): array
     {
         if ($dir === '') {
             return [];
@@ -790,10 +791,7 @@ eot;
             echo "Error in $filename\n";
             die(1);
         }
-        if (isset($tokens['autoload']['files'])) {
-            return $tokens['autoload']['files'];
-        }
-        return [];
+        return $tokens['autoload']['files'] ?? [];
     }
 
     public function genPath($path)
@@ -833,7 +831,7 @@ eot;
      *
      * @return array
      */
-    public function parsePHPFile($filename, &$runMe)
+    public function parsePHPFile($filename, string &$runMe): array
     {
         $runMe = '';
         $r = [];
@@ -921,7 +919,7 @@ eot;
      *
      * @return bool
      */
-    private function inExclusion($path, $exclusions)
+    private function inExclusion(string $path, array $exclusions): bool
     {
         foreach ($exclusions as $ex) {
             if ($ex != '') {
@@ -946,12 +944,12 @@ eot;
         return false;
     }
 
-    public function startwith($string, $test)
+    public function startwith($string, $test): bool
     {
         return strpos($string, $test) === 0;
     }
 
-    public function endswith($string, $test)
+    public function endswith($string, $test): bool
     {
         $strlen = strlen($string);
         $testlen = strlen($test);
@@ -1089,10 +1087,16 @@ function autoloadone_exception_handler($exception) {
         $r .= "Trace:\n";
         foreach ($exception->getTrace() as $error) {
             // we remove all trace pointing to this file.
-            if (isset($error['file']) && strpos($error['file'], __FILE__) === false) {
-                $r .= $error['file'] . '[' . $error['line'] . ']' . ' function:' . @$error['function'] . '('
-                    .( is_array(@$error['args']) ? @implode(',', @$error['args']) . ')' : @$error['args'])
-                    . "\n";
+            if (isset($error['file'])) {
+                if(strpos($error['file'], __FILE__) === false) {
+                    $r .= @$error['file'] . '[' . @$error['line'] . ']' . ' function:' . @$error['function'] . '('
+                        .( is_array(@$error['args']) ? @implode(',', @$error['args']) . ')' :@$error['args'])
+                        . "\n";
+                } else {
+                    $r .= '(nofile)' . '[' . @$error['line'] . ']' . ' function:' . @$error['function'] . '('
+                        .( is_array(@$error['args']) ? @implode(',', @$error['args']) . ')' :@$error['args'])
+                        . "\n";                
+                }
             }
         }
     }
@@ -1209,7 +1213,7 @@ EOD;
         return $template;
     }
 
-    private function createArrayPHP($array)
+    private function createArrayPHP($array): string
     {
         $result = '';
         foreach ($array as $k => $v) {
@@ -1230,7 +1234,7 @@ EOD;
      *
      * @return array
      */
-    public function compress(&$paths)
+    public function compress(array &$paths): array
     {
         if (!$this->compression) {
             return [];
@@ -1312,7 +1316,7 @@ EOD;
         return @file_put_contents($this->savefileName, $txt);
     }
 
-    private function evaluation($percentage)
+    private function evaluation($percentage): string
     {
         switch (true) {
             case $percentage === 0:
@@ -1329,7 +1333,7 @@ EOD;
         return 'The worst';
     }
 
-    public function render()
+    public function render(): void
     {
         if ($this->debugMode) {
             ob_clean();
@@ -1669,7 +1673,7 @@ TEM1;
         }
     }
 
-    public function bootstrapcss()
+    public function bootstrapcss(): string
     {
         return <<<BOOTS
     	<style>
