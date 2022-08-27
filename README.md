@@ -1,6 +1,7 @@
 # PHP Auto Include AutoLoadOne Generator
 
-AutoloadOne is a program that generates an autoload class (Auto Include) for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.   It is a direct alternative to Composer's autoload, but it works differently.   Composer's autoload, scans the folders during runtime, while this library only scans the folder once and it stores the result.
+AutoloadOne is a program that generates an autoload class (Auto Include) for PHP that is project specific. This class is useful to use classes on code without calling each "include" manually.   It is a direct alternative to Composer's autoload, but it works differently.   
+Composer's autoload, scans the folders during runtime, while this library only scans the folder once, and it stores the result.
 
 [![Packagist](https://img.shields.io/packagist/v/eftec/autoloadone.svg)](https://packagist.org/packages/eftec/autoloadone)
 [![Total Downloads](https://poser.pugx.org/eftec/autoloadone/downloads)](https://packagist.org/packages/eftec/autoloadone)
@@ -15,7 +16,7 @@ AutoloadOne is a program that generates an autoload class (Auto Include) for PHP
 Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.
  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php (or the name 
 indicated) file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate 
-the autoload **class**, **include** and you are ready to load any class (even classes without a namespace, classes in the 
+the autoload **class**, **include,** and you are ready to load any class (even classes without a namespace, classes in the 
 namespace in different folders, multiple classes defined in a single file...).  
 
 AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.
@@ -391,9 +392,9 @@ However, some classes are not required to be loaded by the project (for example 
 For example, excluding PHPUnit and Mockery reduces the use to 206mb (1000 users) or 2gb (10k users) but **we could optimize it even further.**
  
 | Concurrent Users | Composer's autoload (Optimized) | AutoLoadOne | AutoLoadOne Optimized | AutoLoadOne Optimized and compressed |
-|------------------|---------------------------------|-------------|-----------------------|-----------------------|
-| 1000             | 609mb                           | 301mb       | 206mb                 | 130mb                 |
-| 10000            | 6gb                             | 3gb         | 2gb                   |1gb                    |
+|------------------|---------------------------------|-------------|-----------------------|--------------------------------------|
+| 1000             | 609mb                           | 301mb       | 206mb                 | 130mb                                |
+| 10000            | 6gb                             | 3gb         | 2gb                   | 1gb                                  |
 
 
 ### Lookup usage?
@@ -570,6 +571,8 @@ reads the composer.json files once.
 
 ## Version
 
+* 1.27 2022-08-27
+  *  [fix] fixed a problem with double mapped.
 * 1.26 2022-02-21
     * [fix] compatibility with PHP 8.1. 
     * Raising the compatibility with php 7.1.5 and higher. If you want to use an old version, then you can use 1.25.1

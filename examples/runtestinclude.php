@@ -3,28 +3,31 @@ namespace dummy;
 
 // This example doesn't use autoload
 
-include '../test/folder\NaturalClass.php';
-include '../test/folder/subfolder\AnotherNaturalClass.php';
-include '../test/folder/subfolder\AnotherNaturalClass2.php';
-include '../test/folder/subfolder\MoreNaturalClass.php';
-include '../test/folder/subfolderalt/CustomClass.php';
-include '../test/folder/multiplenamespace.php';
-include '../test/folder/subfolderalt/ClassWithoutNameSpace.php';
+include '../examples/folder\NaturalClass.php';
+include '../examples/folder/subfolder\AnotherNaturalClass.php';
+include '../examples/folder/subfolder\AnotherNaturalClass2.php';
+include '../examples/folder/subfolder\MoreNaturalClass.php';
+include '../examples/folder/subfolderalt/CustomClass.php';
+include '../examples/folder/multiplenamespace.php';
+include '../examples/folder/subfolderalt/ClassWithoutNameSpace.php';
 
 use ClassWithoutNameSpace;
-
-
+use nsfolder\NaturalClass;
+use nsfolder\subnamespace\AnotherNaturalClass;
+use nsfolder\subnamespace\AnotherNaturalClass2;
+use nsfolder\subnamespace\CustomClass;
+use nsfolder\subnamespace\MoreNaturalClass;
 
 // basic
-$c2=new \folder\NaturalClass();
+$c2=new NaturalClass();
 // same folders
-$c1=new \folder\subfolder\AnotherNaturalClass();
-$c3=new \folder\subfolder\AnotherNaturalClass2();
-$c4=new \folder\subfolder\MoreNaturalClass();
+$c1=new AnotherNaturalClass();
+$c3=new AnotherNaturalClass2();
+$c4=new MoreNaturalClass();
 // same folder, again
-$c4=new \folder\subfolder\MoreNaturalClass();
+$c4=new MoreNaturalClass();
 // same namespace, different folder
-$c5=new \folder\subfolder\CustomClass();
+$c5=new CustomClass();
 
 // one file, two namespaces
 $c6=new \MyProject\Connection();
@@ -38,4 +41,4 @@ $c9=new ClassWithoutNameSpace();
 echo "Ok<br>";
 
 echo "the next command should raise an error:<br>";
-$cE1 = new \folder\subfolder\CustomClassE();
+$cE1 = new CustomClassE();

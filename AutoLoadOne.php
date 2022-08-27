@@ -1,6 +1,4 @@
-<?php /** @noinspection TypeUnsafeArraySearchInspection */
-/** @noinspection SuspiciousAssignmentsInspection */
-/** @noinspection TypeUnsafeComparisonInspection */
+<?php
 /** @noinspection NotOptimalIfConditionsInspection */
 /** @noinspection NonSecureUniqidUsageInspection */
 /** @noinspection SubStrUsedAsStrPosInspection */
@@ -45,12 +43,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.26 2022-02-21
+ * @version   1.27 2022-08-27
  * @noautoload
  */
 class AutoLoadOne
 {
-    public const VERSION = '1.26';
+    public const VERSION = '1.27';
 
 
     public $rooturl = '';
@@ -248,7 +246,7 @@ eot;
             echo "------------------------------------------------------------------\n";
         } else {
             $this->getAllParametersCli();
-            $this->fileGen = ($this->fileGen == '') ? '.' : $this->fileGen; //getcwd()
+            $this->fileGen = ($this->fileGen === '') ? '.' : $this->fileGen; //getcwd()
             $this->button = 1;
         }
         if ($this->current) {
@@ -328,7 +326,7 @@ eot;
         if (!$this->logged) {
             $user = @$_POST['user'];
             $password = @$_POST['password'];
-            if (($user == _AUTOLOAD_USER && $password == _AUTOLOAD_PASSWORD) || _AUTOLOAD_ENTER) {
+            if (($user === _AUTOLOAD_USER && $password === _AUTOLOAD_PASSWORD) || _AUTOLOAD_ENTER) {
                 $_SESSION['log'] = '1';
                 $this->logged = 1;
             } else {
@@ -556,6 +554,7 @@ eot;
                         $autorunsFromJson[] = $full;
                     }
                 }
+                $mapped=[];
                 foreach ($files as $key => $f) {
                     $f = $this->fixSeparator($f);
                     $runMe = '';
@@ -572,7 +571,7 @@ eot;
                     $urlFull = $this->dirNameLinux($full); ///folder/subfolder/f1
                     $tmpArr = explode('/', $f); //F1.php
                     $basefile = end($tmpArr); // the config name shares the same name as the php but with extension .json
-                    if ($runMe != '') {
+                    if ($runMe !== '') {
                         switch ($runMe) {
                             case '@autorun first':
                                 $autorunsFirst[] = $full;
@@ -588,23 +587,24 @@ eot;
                                 break;
                         }
                     }
+
                     foreach ($pArr as $p) {
                         $nsp = $p['namespace'];
                         $cs = $p['classname'];
                         $this->statNameSpaces[$nsp] = 1;
                         $this->statNumPHP++;
-                        if ($cs != '') {
+                        if ($cs !== '') {
                             $this->statNumClass++;
                         }
 
-                        $altUrl = ($nsp != '') ? $nsp . '\\' . $cs : $cs; // namespace
+                        $altUrl = ($nsp !== '') ? $nsp . '\\' . $cs : $cs; // namespace
 
-                        if ($nsp != '' || $cs != '') {
-                            if ((!isset($ns[$nsp]) || $ns[$nsp] == $dir) && $basefile == $cs . $this->extension) {
+                        if ($nsp !== '' || $cs !== '') {
+                            if ((!isset($ns[$nsp]) || $ns[$nsp] === $dir) && $basefile === $cs . $this->extension) {
                                 // namespace doesn't exist and the class is equals to the name
                                 // adding as a folder
                                 $exclude = false;
-                                if ($nsp != '' && in_array($nsp, $excludeNSArr)) {
+                                if ($nsp !== '' && in_array($nsp, $excludeNSArr, true)) {
                                     //if ($this->inExclusion($nsp, $this->excludeNSArr) && $nsp!="") {
                                     $this->addLog("Ignoring namespace (path specified in <b>Excluded NameSpace</b>): <b>$altUrl -> $full</b>",
                                         'warning');
@@ -622,11 +622,12 @@ eot;
                                 }
 
                                 if (!$exclude) {
-                                    if ($nsp == '') {
+                                    if ($nsp === '') {
                                         $this->addLog("Adding Full map (empty namespace): <b>$altUrl -> $full</b> to class <i>$cs</i>", 'warning');
                                         $nsAlt[$altUrl] = $full;
                                         $pathAbsolute[$altUrl] = $filesAbsolute[$key];
                                     } elseif (isset($ns[$nsp])) {
+                                        $mapped[]=$nsp.'\\'.$cs;
                                         $this->addLog("Reusing the folder: <b>$nsp -> $dir</b> to class <i>$cs</i>",
                                             'success');
                                     } else {
@@ -642,15 +643,19 @@ eot;
                                 if ($this->stop) {
                                     die(1);
                                 }
-                            } elseif ((!in_array($altUrl, $excludeNSArr) || $nsp == '') &&
+                            } elseif ((!in_array($altUrl, $excludeNSArr, true) || $nsp === '') &&
                                 !$this->inExclusion($urlFull, $excludePathArr)) {
-                                $this->addLog("Adding Full relation: <b>$altUrl -> $full</b> to class <i>$cs</i>", 'warning');
-                                $nsAlt[$altUrl] = $full;
-                                $pathAbsolute[$altUrl] = $filesAbsolute[$key];
+                                if(in_array($altUrl, $mapped, true)) {
+                                    $this->addLog("Not Added Full relation: <b>$altUrl -> $full</b> to class <i>$cs</i> (already added)", 'warning');
+                                } else {
+                                    $this->addLog("Adding Full relation: <b>$altUrl -> $full</b> to class <i>$cs</i>", 'warning');
+                                    $nsAlt[$altUrl] = $full;
+                                    $pathAbsolute[$altUrl] = $filesAbsolute[$key];
+                                }
                             }
                         }
                     }
-                    if (count($pArr) == 0) {
+                    if (count($pArr) === 0) {
                         $this->statNumPHP++;
                         if ($runMe === '@noautoload') {
                             $this->addLog("Ignoring <b>$full</b> Reason: <b>@noautoload</b> found", 'warning');
@@ -663,7 +668,7 @@ eot;
                     $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload first</b> found", 'warning');
                 }
                 foreach ($autoruns as $auto) {
-                    if (in_array($auto, $autorunsFromJson)) {
+                    if (in_array($auto, $autorunsFromJson, true)) {
                         $this->addLog("Adding file <b>$auto</b> Reason: <b>composer.json</b> found", 'warning');
                     } else {
                         $this->addLog("Adding file <b>$auto</b> Reason: <b>@autoload</b> found", 'warning');
@@ -751,7 +756,7 @@ eot;
                 if ($ff === 'composer.json') {
                     $json[] = $list[] = $dir . '/' . $ff;
                 }
-                if ((strlen($ff) >= 5) && substr($ff, -4) == $this->extension) {
+                if ((strlen($ff) >= 5) && substr($ff, -4) === $this->extension) {
                     // PHP_OS_FAMILY=='Windows'
                     $list[] = $dir . '/' . $ff;
                 }
@@ -800,7 +805,7 @@ eot;
         $path = $this->fixSeparator($path);
 
 
-        if (strpos($path, $this->baseGen) == 0) {
+        if (strpos($path, $this->baseGen) === 0) {
             $min1 = strrpos($path, '/');
             $min2 = strrpos($this->baseGen . '/', '/');
             //$min=min(strlen($path),strlen($this->baseGen));
@@ -808,7 +813,7 @@ eot;
             $baseCommon = $min;
 
             for ($i = 0; $i < $min; $i++) {
-                if (substr($path, 0, $i) != substr($this->baseGen, 0, $i)) {
+                if (substr($path, 0, $i) !== substr($this->baseGen, 0, $i)) {
                     $baseCommon = $i - 2;
                     break;
                 }
@@ -851,7 +856,7 @@ eot;
             die(1);
         }
         foreach ($tokens as $token) {
-            if (is_array($token) && ($token[0] == T_COMMENT || $token[0] == T_DOC_COMMENT)) {
+            if (is_array($token) && ($token[0] === T_COMMENT || $token[0] === T_DOC_COMMENT)) {
                 if (strpos($token[1], '@noautoload') !== false) {
                     $runMe = '@noautoload';
 
@@ -871,7 +876,7 @@ eot;
         $nameSpace = '';
         $className = '';
         foreach ($tokens as $p => $token) {
-            if (is_array($token) && $token[0] == T_NAMESPACE) {
+            if (is_array($token) && $token[0] === T_NAMESPACE) {
                 // We found a namespace
                 $ns = '';
                 for ($i = $p + 2; $i < $p + 30; $i++) {
@@ -887,10 +892,10 @@ eot;
 
             $isClass = false;
             // A class is defined by a T_CLASS + a space + name of the class.
-            if (is_array($token) && ($token[0] == T_CLASS || $token[0] == T_INTERFACE || $token[0] == T_TRAIT) &&
-                is_array($tokens[$p + 1]) && $tokens[$p + 1][0] == T_WHITESPACE) {
+            if (is_array($token) && ($token[0] === T_CLASS || $token[0] === T_INTERFACE || $token[0] === T_TRAIT) &&
+                is_array($tokens[$p + 1]) && $tokens[$p + 1][0] === T_WHITESPACE) {
                 $isClass = true;
-                if (is_array($tokens[$p - 1]) && $tokens[$p - 1][0] == T_PAAMAYIM_NEKUDOTAYIM &&
+                if (is_array($tokens[$p - 1]) && $tokens[$p - 1][0] === T_PAAMAYIM_NEKUDOTAYIM &&
                     $tokens[$p - 1][1] === '::') {
                     // /namespace/Nameclass:class <-- we skip this case.
                     $isClass = false;
@@ -902,7 +907,7 @@ eot;
                 // encontramos una clase
                 $min = min($p + 30, count($tokens) - 1);
                 for ($i = $p + 2; $i < $min; $i++) {
-                    if (is_array($tokens[$i]) && $tokens[$i][0] == T_STRING) {
+                    if (is_array($tokens[$i]) && $tokens[$i][0] === T_STRING) {
                         $className = $tokens[$i][1];
                         break;
                     }
@@ -922,7 +927,7 @@ eot;
     private function inExclusion(string $path, array $exclusions): bool
     {
         foreach ($exclusions as $ex) {
-            if ($ex != '') {
+            if ($ex !== '') {
                 if ($ex[strlen($ex) - 1] === '*') {
                     $bool = $this->startwith($path, substr($ex, 0, -1));
                     if ($bool) {
@@ -935,7 +940,7 @@ eot;
                         return true;
                     }
                 }
-                if ((strpos($ex, '*') === false) && $path == $ex) {
+                if ((strpos($ex, '*') === false) && $path === $ex) {
                     return true;
                 }
             }
@@ -966,7 +971,9 @@ eot;
 
         $template = "<?php" . <<<'EOD'
 
-/** @noinspection PhpUnhandledExceptionInspection
+/**
+ * @noinspection PhpRedundantVariableDocTypeInspection 
+ * @noinspection PhpUnhandledExceptionInspection
  * @noinspection PhpMissingParamTypeInspection
  * @noinspection ClassConstantCanBeUsedInspection
  */
@@ -983,7 +990,10 @@ eot;
 /** @var bool $autoloadone__debug if true then in case of error, it shows more information about the source of it  */ 
 $autoloadone__debug = true;
 
-/* @var string[] Where $_arrautoloadCustom['namespace\Class']='folder\file.php' */
+/** 
+ * @var string[] ${{tempname}}__arrautoloadCustom It stores the map of definitions full=>filename.<br>
+ * example: ['namespace\Class']='folder\file.php' 
+ */
 ${{tempname}}__arrautoloadCustom = [
 {{custom}}
 ];
@@ -991,7 +1001,9 @@ ${{tempname}}__arrautoloadCustomCommon = [
 {{customCommon}}
 ];
 
-/* @var string[] Where $_arrautoload['namespace']='folder' */
+/* @var string[] ${{tempname}}__arrautoload It stores the map of definitions as namespace=>folder
+ * Example: ['namespace']='folder'
+ */
 ${{tempname}}__arrautoload = [
 {{include}}
 ];
@@ -999,9 +1011,12 @@ ${{tempname}}__arrautoloadCommon = [
 {{includeCommon}}
 ];
 
-/* @var boolean[] Where $_arrautoload['namespace' or 'namespace\Class']=true if it's absolute (it uses the full path) */
+/**
+ * @var boolean[] ${{tempname}}__arrautoloadAbsolute It stores the map absolutely<br>
+ * Example: $['namespace' or 'namespace\Class']=true if it's absolute (it uses the full path)
+ */
 ${{tempname}}__arrautoloadAbsolute = [
-{{includeabsolute}} 
+{{includeabsolute}}
 ];
 
 /**
@@ -1010,7 +1025,7 @@ ${{tempname}}__arrautoloadAbsolute = [
  */
 function {{tempname}}__auto($class_name)
 {
-    // its called only if the class is not loaded.
+    // it's called only if the class is not loaded.
     set_exception_handler('autoloadone_exception_handler');
     $p=strrpos($class_name,'\\');
     if($p!==false) {
@@ -1037,29 +1052,28 @@ function {{tempname}}__auto($class_name)
     if(!class_exists($class_name)) {
         throw new RuntimeException("AutoLoadOne Error: No file found for class [$class_name]");
     }
-    restore_exception_handler();    
+    restore_exception_handler();
 }
 
 /**
- * We load the file.    
+ * We load the file.
  * @param string $className the name of the class
  * @param string $filename the filename to load
  * @param string $key key of the class it could be the full class name or only the namespace
- * @param string $arrayName [optional] it's the name of the arrayname used to replaced |n| values. 
+ * @param string $arrayName [optional] it's the name of the arrayname used to replaced |n| values.
  * @throws Exception
  */
 function {{tempname}}__loadIfExists($className,$filename, $key,$arrayName='')
 {
     if (isset($GLOBALS['{{tempname}}__arrautoloadAbsolute'][$key])) {
-        $fullFile = $filename; // its an absolute path
+        $fullFile = $filename; // it's an absolute path
         if (strpos($fullFile, '../') === 0) { // Or maybe, not, it's a remote-relative path.
             $oldDir = getcwd();  // we copy the current url
             chdir(__DIR__);
         }
     } else {
-        $fullFile = __DIR__ . '/' . {{tempname}}__replaceCurlyVariable($filename, $arrayName); // its relative to this path
+        $fullFile = __DIR__ . '/' . {{tempname}}__replaceCurlyVariable($filename, $arrayName); // it's relative to this path
     }
-    /** @noinspection PhpIncludeInspection */
     if ((@include $fullFile) === false) {
         if ($GLOBALS['autoloadone__debug']) {
             throw new RuntimeException("AutoLoadOne Error: Loading file [$fullFile] for class [$className]");
@@ -1069,7 +1083,7 @@ function {{tempname}}__loadIfExists($className,$filename, $key,$arrayName='')
     if (isset($oldDir)) {
         chdir($oldDir);
     }
-} 
+}
 function {{tempname}}__replaceCurlyVariable($string,$arrayName) {
     if(strpos($string,'|')===false) {
         return $string;
@@ -1095,7 +1109,7 @@ function autoloadone_exception_handler($exception) {
                 } else {
                     $r .= '(nofile)' . '[' . @$error['line'] . ']' . ' function:' . @$error['function'] . '('
                         .( is_array(@$error['args']) ? @implode(',', @$error['args']) . ')' :@$error['args'])
-                        . "\n";                
+                        . "\n";
                 }
             }
         }
@@ -1178,7 +1192,7 @@ EOD;
             $htmlCommonAbsolute,
             $includeAbsolute,
             $htmlCommonNameAbs,
-            uniqid('s'),
+            substr(uniqid('s'),0,6), // we don't need a long name.
             $autorun,
             _AUTOLOAD_COMPOSERJSON ?
                 'Autorun: this file was created using _AUTOLOAD_COMPOSERJSON=true'
