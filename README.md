@@ -5,7 +5,7 @@ Composer's autoload, scans the folders during runtime, while this library only s
 
 [![Packagist](https://img.shields.io/packagist/v/eftec/autoloadone.svg)](https://packagist.org/packages/eftec/autoloadone)
 [![Total Downloads](https://poser.pugx.org/eftec/autoloadone/downloads)](https://packagist.org/packages/eftec/autoloadone)
-[![Maintenance](https://img.shields.io/maintenance/yes/2022.svg)]()
+[![Maintenance](https://img.shields.io/maintenance/yes/2023.svg)]()
 [![composer](https://img.shields.io/badge/composer-%3E1.8-blue.svg)]()
 [![php](https://img.shields.io/badge/php-7.1-green.svg)]()
 [![php](https://img.shields.io/badge/php-8.x-green.svg)]()
@@ -16,7 +16,7 @@ Composer's autoload, scans the folders during runtime, while this library only s
 Contrary to other alternatives, it supports the easiest way to autoload classes using PHP without sacrifice performance.
  How it works?. AutoLoadOne pre-calculates every class of a project and generates a single autoload.php (or the name 
 indicated) file that it's ready to use.  You don't need a specific folder, structure or rule to use it. Just generate 
-the autoload **class**, **include,** and you are ready to load any class (even classes without a namespace, classes in the 
+the autoload file **class**, **include,** and you are ready to load any class (even classes without a namespace, classes in the 
 namespace in different folders, multiple classes defined in a single file...).  
 
 AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use of psr-0 or psr-4.
@@ -24,20 +24,59 @@ AutoLoadOne is a replacement to Composer's Autoload, rendering obsolete the use 
 
 > <b>NOTE:</b> If you run the dev-distro, then you must exclude the example/ folder because it contains @autorun tags.  
 
-**Last Update 17 Abril, 2021**
+**Last Update 26 Jan, 2023**
 
 > "Universal Autoloading classes in PHP, any class, any time!"
+
+## Table of Contents
+
+<!-- TOC -->
+* [PHP Auto Include AutoLoadOne Generator](#php-auto-include-autoloadone-generator)
+  * [Table of Contents](#table-of-contents)
+  * [How it Works?](#how-it-works)
+  * [When I should re-run AutoLoadOne?](#when-i-should-re-run-autoloadone)
+  * [Composer Autoload features:](#composer-autoload-features-)
+  * [AutoLoadOne extended features:](#autoloadone-extended-features-)
+  * [Getting started](#getting-started)
+  * [Usage using the CLI](#usage-using-the-cli)
+  * [Usage via code](#usage-via-code)
+  * [Usage (generate code via Web)](#usage--generate-code-via-web-)
+  * [Usage (via cli)](#usage--via-cli-)
+  * [Usage of the generated file (autoload.php)](#usage-of-the-generated-file--autoloadphp-)
+  * [Note](#note)
+  * [Autorun](#autorun)
+  * [Extension](#extension)
+  * [Statistic and optimization](#statistic-and-optimization)
+    * [How can I reduce the map?](#how-can-i-reduce-the-map)
+  * [Test](#test)
+    * [AutoLoadOne](#autoloadone)
+    * [Optimized AutoLoadOne](#optimized-autoloadone)
+    * [Composer's autoload (using optimize)](#composers-autoload--using-optimize-)
+    * [Why the size matter?.](#why-the-size-matter)
+    * [Lookup usage?](#lookup-usage)
+      * [How many lookup are called?.](#how-many-lookup-are-called)
+  * [TEST II (Magento 2.2.3)](#test-ii--magento-223-)
+    * [Let's say we have 1000 concurrent users](#lets-say-we-have-1000-concurrent-users)
+    * [Compression and Magento.](#compression-and-magento)
+    * [Code execution.](#code-execution)
+  * [Benchmark](#benchmark)
+  * [Security](#security)
+  * [Composer.json](#composerjson)
+  * [Version](#version)
+  * [Todo](#todo)
+<!-- TOC -->
 
 ## How it Works?
 
 :one:  
  Run AutoLoadOne.php as CLI or as Web.  
 :two:  
- AutoLoadOne will generate a single file called autoload.php (or the name indicated) based in your project. For the record, it takes mere 1.5 seconds to scan Wordpress and yes, it is compatible with Wordpress.  
+ AutoLoadOne will generate a single file called autoload.php (or the name indicated) based in your project. 
+For the record, it takes mere 1.5 seconds to scan WordPress and yes, it is compatible with WordPress.  
 :three:  
  Include the generated file (ex: autoload.php) in your project code and start using it.  
 
-## When i should re-run AutoLoadOne?
+## When I should re-run AutoLoadOne?
 
 You don't need to run it again if you are adding a new class with the same namespace in the same folder.
 
@@ -61,12 +100,14 @@ Or you could run AutoLoadOne.php again and replace the old generated file.
 :white_check_mark: It only requires PHP  
 :white_check_mark: The folder structure and classes are validated once.  
 :white_check_mark: If you add a class that shares a previous folder and uses the previous namespace, then you don't need to run the generator.  
-:white_check_mark: You could use any structure of folder. It's recommended to use the same folder for the same namespace but it's not a requisite.  
+:white_check_mark: You could use any structure of folder. It's recommended to use the same folder for the same namespace,
+but it's not a requisite.  
 :white_check_mark: Support CLI and Web-UI.  
 :white_check_mark: It doesn't require APCU, lock files or cache.  
 :white_check_mark: It´s compatible with practically any project, including a project that uses Composer's autoload.  
-:white_check_mark: It's compatible with PSR-0, PSR-4, and practically  any specification, since you don't need to use any special configuration or standard.  
-:white_check_mark: It allows libraries outside of the project folder.  
+:white_check_mark: It's compatible with PSR-0, PSR-4, and practically  any specification, since you don't need to use
+any special configuration or standard.  
+:white_check_mark: It allows libraries outside the project folder.  
 For example /someuser/myproject/ allows to include libraries from the folder /otheruser/library/    
 :white_check_mark: It doesn't require APCU, lock files or cache.   
 :white_check_mark: It has a minimum impact on runtime.         
@@ -147,7 +188,7 @@ Enter your user and password.  If _AUTOLOAD_ENTER is true then you are logged au
 
 
 :five:  
- The result should looks this:
+ The result should look this:
 
 ![autoloadone screen2](https://raw.githubusercontent.com/EFTEC/AutoLoadOne/master/doc/screen2.jpg "Autoloadone screen2")
 
@@ -166,7 +207,7 @@ Commands available :
 * save yes/no (save the file to generate).This option is required.
 * excludens (namespace excluded)  
 * excludepath (path excluded)  
-* externalpath (include an external path). An external path is a library that lives outside of the project folder
+* externalpath (include an external path). An external path is a library that lives outside the project folder
 
 
 > Example: php autoloadone.php -folder folder\scan -filegen folder\whereautoload\ -save yes
@@ -226,7 +267,7 @@ In the /test folder you could find some example to try.
 ```
 
 
-> If you find the error: Parse error: syntax error, <message> in on line 000. Then some of the php files scanned have some syntax error. The solution is to fix the problem or to exclude the whole folder.  
+> If you find the error: Parse error: syntax error, <message> in on line 000. Then some php files scanned have some syntax error. The solution is to fix the problem or to exclude the whole folder.  
 > How to find the file with error? You could run the page with the debug flag: autoloadone.php?debug=1  
 
 ## Extension
@@ -267,16 +308,17 @@ In the log file:
 
 ### How can I reduce the map?
 
-* You could use one class / one file, also, the class must have the same name than the filename.  **The name of the namespace is irrelevant**
+* You could use one class / one file, also, the class must have the same name as the filename.  **The name of the namespace is irrelevant**
   > Example Customer.php and class Customer { }
-* Grouping classes of the same namespace in the same folder. So, the library could maps the whole namespace as a single folder instead of map per file/class. 
+* Grouping classes of the same namespace in the same folder. So, the library could map the whole namespace as a single folder instead of map per file/class. 
 * * :file_folder: repository (_repositoryns\\_)
 * * * :page_with_curl: MyClass.php _repositoryns\\MyClass_
 * * * :page_with_curl: MyClass2.php _repositoryns\\MyClass2_
 * * :file_folder: model (_namespace_model\\_)
 * * * :page_with_curl: MyClass.php _namespace_model\\MyClass_
 * * * :page_with_curl: MyClass2.php _namespace_model\\MyClass2_
-* You could remove (:scissors:) namespaces and folders that you don't need it. Some namespaces and folders are used by the system however, they don't require to be autoloaded because they are loaded manually (for example, most libraries load it's own include manually)
+* You could remove (:scissors:) namespaces and folders that you don't need it. Some namespaces and folders are used by the system however, they don't require to be autoloaded because they are loaded manually (for example, most libraries load 
+its own include manually)
 * * :file_folder: somelibrary 
 * * * :page_with_curl: MainLibraryClass.php 
 * * * :page_with_curl: IncludesLibrary.php :scissors:
@@ -308,7 +350,7 @@ class Someclass {
 
 ## Test 
 
-I created a empty blog on Laravel. The project is empty but the default libraries and components.
+I created an empty blog on Laravel. The project is empty but the default libraries and components.
 
 
 Files:
@@ -355,7 +397,7 @@ composer dump-autoload -o
 
 Autoload uses one of the next methods:
 
-* Static:  (fast method, it uses more memory and it requires to be calculated manually)
+* Static:  (fast method, it uses more memory, and it requires to be calculated manually)
 
   
     autoload.php 1kb  
@@ -399,15 +441,16 @@ For example, excluding PHPUnit and Mockery reduces the use to 206mb (1000 users)
 
 ### Lookup usage?
 
-Let's say we have a "map" with different elements. How much time does it takes to find the element of the map?.
+Let's say we have a "map" with different elements. How much time does it take to find the element of the map?.
 
-|Map size|Time (1 million of lookup sequentially)|
-|--------|----|
-|100     |0.271 seconds +/- |
-|10.000  |0.299 seconds  +/-  |
-|1.000.000|0.376 seconds  +/- |
+| Map size  | Time (1 million of lookup sequentially) |
+|-----------|-----------------------------------------|
+| 100       | 0.271 seconds +/-                       |
+| 10.000    | 0.299 seconds  +/-                      |
+| 1.000.000 | 0.376 seconds  +/-                      |
 
-So, the size of the map/lookup time is not important. The difference between a small map (100 elements) versus a huge map (1 million of elements) is 0.1 second in total (per 1 millon of queries). However the memory usage matters and it could impact the performance considerably.
+So, the size of the map/lookup time is not important. The difference between a small map (100 elements) versus a huge map (1 million of elements) is 0.1 second in total (per 1 millon of queries). 
+However, the memory usage matters, and it could impact the performance considerably.
 
 #### How many lookup are called?.
 
@@ -437,26 +480,26 @@ In comparison, Composer's autoload (optimized) uses
     Generated optimized autoload files containing 11582 classes
     Number of Maps: 11582 classes (2.6mb of memory will be use per request per user)
     
-|Composer's autoload (optimized) | AutoLoadOne (not optimized) |  AutoLoadOne (not optimized, compressed) |     
-|------------------|---------------------------------|-------------|
-| 2.6mb | 1.36mb| 1.16mb|
+| Composer's autoload (optimized) | AutoLoadOne (not optimized) | AutoLoadOne (not optimized, compressed) |     
+|---------------------------------|-----------------------------|-----------------------------------------|
+| 2.6mb                           | 1.36mb                      | 1.16mb                                  |
 
 However, it is without a manual optimization.    
     
 ### Let's say we have 1000 concurrent users    
 
-| Concurrent Users(*) | Composer's autoload (Optimized) | AutoLoadOne (not optimized) |  AutoLoadOne (compressed) |
-|------------------|---------------------------------|-------------|-------------|
-| 1000             | 2.6gb                          | 1.36gb      |1.16gb      |
-| 10000            | 26gb                          | 13.6gb      |11.6gb      |      
+| Concurrent Users(*) | Composer's autoload (Optimized) | AutoLoadOne (not optimized) | AutoLoadOne (compressed) |
+|---------------------|---------------------------------|-----------------------------|--------------------------|
+| 1000                | 2.6gb                           | 1.36gb                      | 1.16gb                   |
+| 10000               | 26gb                            | 13.6gb                      | 11.6gb                   |      
 
 > (*) However, Magento wasn't create for concurrency. But, however what we are measuring is not the number of
 > concurrent users but the number of concurrent calls (for example rest-json, opening a page and such).
 
 ### Compression and Magento.
 
-While AutoLoadOne is able to compress the map but it only compresses the path of it, not the namespace. It is
-because the compression is aimed to generate the minimum impact on the system.   Magento relies heavily in huge 
+While AutoLoadOne is able to compress the map, but it only compresses the path of it, not the namespace. It is
+because the compression is aimed to generate the minimum impact on the system.   Magento relies on heavily in huge 
 namespaces so the compression is unable to compress them. But still, the system is able to compress values in 15%.
 
 In general, the compression allows to shrink the values in 40-50%.
@@ -466,7 +509,7 @@ In general, the compression allows to shrink the values in 40-50%.
 
 Both AutoLoadOne and Composer's autoload execute a code when it is initialized/executed.
 
-When AutoLoadOne generates the map, it consists of two relational arrays as follow:
+When AutoLoadOne generates the map, it consists of two relational arrays as follows:
 
 ```php
     private $_arrautoloadCustom = array(
@@ -504,7 +547,8 @@ You could block the access to the file
 
 RedirectMatch 403 ^/folder/^/folder/.*$
 
-> :heavy_exclamation_mark: While the program has a build-in-security measure, however I suggest to protect adding new layers of security such as locating the AutoLoadOne.php file outside of the public/web folder.
+> :heavy_exclamation_mark: While the program has a build-in-security measure, however I suggest to protect adding new layers of security such as locating the AutoLoadOne.php file
+outside the public/web folder.
 
 > AutoLoadOne.php is not safe (because it writes a generate file), it doesn't have access to the database, neither it allows to write any content to the file but, it could overwrite an exist code and put down a system.
 
@@ -525,7 +569,7 @@ Deny from all
 </Files>
 ```
 
-* Or you could restrict the access to PHP and it's the behaviour by default on Linux (it runs under Apache's account
+* Or you could restrict the access to PHP, and it's the behaviour by default on Linux (it runs under Apache's account
 , most of the time as user NOBODY)
 
 
@@ -570,7 +614,8 @@ reads the composer.json files once.
   
 
 ## Version
-
+* 1.28 2023-01-26
+  * Small cleanups 
 * 1.27 2022-08-27
   *  [fix] fixed a problem with double mapped.
 * 1.26 2022-02-21
@@ -623,14 +668,16 @@ reads the composer.json files once.
 * 1.14 2019-06-08 Fixed some bug.  Reverted to global (const arrays are not compatible with php<7.0)  
 * 1.12 2019-05-10 Added some changes pushed. Removed css.
 * 1.11 2019-03-04 It allows to specify the result php file. And some cleanups.  Now, /namespace/nameclass:class is not considered a class
-* 1.10 2018-10-18 It solves a small bug when we load autoload.php from a different url and it calls a external and remote folder.
+* 1.10 2018-10-18 It solves a small bug when we load autoload.php from a different url,
+and it calls an external and remote folder.
 * 1.9 2018-10-14 A small fix and some colors.
 * 1.8 2018-10-14 Added external path and some fixes. Now you could add a path without comma (it's added automatically) [WebUI] 
 * 1.7 2018-10-12 Some small fixes. Now by default, the system uses the caller's path instead of the AutoLoadOne.php path.
 * 1.6 2018-09-28 Added wildcard (*) to exclusion list (folders).
-* 1.5 2018-09-05 Now the interface open automatically by default. This file must be delete or restricted if it's used publicity.
+* 1.5 2018-09-05 Now the interface open automatically by default. This file must be deleted or restricted if it's used publicity.
 * 1.4 2018-08-25 Some example. Now the interface doesn't open automatically by default. It's for security.
-* 1.3 2018-07-05 Now it works with interface and it fixes a problem with some specific file.  It also fixes a problem with linux vs windows folder.
+* 1.3 2018-07-05 Now it works with interface, and it fixes a problem with some specific file.  It also fixes a problem
+with linux vs Windows folder.
 * 1.2 2018-07-01 Lots of changes. Modified exclusion.  Title and icons for the web ui.  It also allows to disable the web.
 * 1.1 2018-06-26 Some fixes. 
 * 1.0 2018-06-24 First version  
@@ -642,4 +689,4 @@ reads the composer.json files once.
 * ~~Convert to a single class.~~
 * ~~External folder/library (relative or absolute path)~~
 * The generation fails if a php file has an error.
-* ~~Specify the extensions. By default it scans only .php files.~~
+* ~~Specify the extensions. By default, it scans only .php files.~~
