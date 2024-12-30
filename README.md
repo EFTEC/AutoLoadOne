@@ -5,10 +5,10 @@ Composer's autoload, scans the folders during runtime, while this library only s
 
 [![Packagist](https://img.shields.io/packagist/v/eftec/autoloadone.svg)](https://packagist.org/packages/eftec/autoloadone)
 [![Total Downloads](https://poser.pugx.org/eftec/autoloadone/downloads)](https://packagist.org/packages/eftec/autoloadone)
-[![Maintenance](https://img.shields.io/maintenance/yes/2023.svg)]()
-[![composer](https://img.shields.io/badge/composer-%3E1.8-blue.svg)]()
-[![php](https://img.shields.io/badge/php-7.1-green.svg)]()
-[![php](https://img.shields.io/badge/php-8.x-green.svg)]()
+[![Maintenance](https://img.shields.io/maintenance/yes/2025.svg)]()
+[![composer](https://img.shields.io/badge/composer-%3E2.0-blue.svg)]()
+[![php](https://img.shields.io/badge/php-7.4-green.svg)]()
+[![php](https://img.shields.io/badge/php-8.4-green.svg)]()
 [![CocoaPods](https://img.shields.io/badge/docs-60%25-yellow.svg)]()
 
 
@@ -614,6 +614,9 @@ reads the composer.json files once.
   
 
 ## Version
+* 1.29 2024-12-30
+  * update dependencies. 
+  * cleaned the code
 * 1.28 2023-01-26
   * Small cleanups 
 * 1.27 2022-08-27

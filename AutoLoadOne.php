@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection JsonEncodingApiUsageInspection */
 /** @noinspection NotOptimalIfConditionsInspection */
 /** @noinspection NonSecureUniqidUsageInspection */
 /** @noinspection SubStrUsedAsStrPosInspection */
@@ -40,40 +40,40 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.28 2023-01-26
+ * @version   1.29 2024-12-30
  * @noautoload
  */
 class AutoLoadOne
 {
-    public const VERSION = '1.28';
-    public $rooturl = '';
-    public $fileGen = '';
-    public $savefile = 1;
-    public $savefileName = 'autoload.php';
-    public $stop = 0;
-    public $compression = 1;
-    public $button = 0;
-    public $excludeNS = '';
-    public $excludePath = '';
-    public $externalPath = '';
-    public $log = '';
-    public $logStat = '';
-    public $result = '';
-    public $cli = '';
-    public $logged = false;
-    public $current = '';
-    public $t1 = 0;
-    public $debugMode = false;
-    public $statNumClass = 0;
-    public $statNumPHP = 0;
-    public $statConflict = 0;
-    public $statError = 0;
-    public $statNameSpaces = [];
-    public $statByteUsed = 1024;
-    public $statByteUsedCompressed = 1024;
-    public $fileConfig = 'autoloadone.json';
+    public const VERSION = '1.29';
+    public ?string $rooturl = '';
+    public ?string $fileGen = '';
+    public ?int $savefile = 1;
+    public ?string $savefileName = 'autoload.php';
+    public ?int $stop = 0;
+    public ?int $compression = 1;
+    public ?int $button = 0;
+    public ?string $excludeNS = '';
+    public ?string $excludePath = '';
+    public ?string $externalPath = '';
+    public ?string $log = '';
+    public ?string $logStat = '';
+    public string $result = '';
+    public string $cli = '';
+    public ?bool $logged = false;
+    public string $current = '';
+    public int $t1 = 0;
+    public bool $debugMode = false;
+    public int $statNumClass = 0;
+    public int $statNumPHP = 0;
+    public int $statConflict = 0;
+    public int $statError = 0;
+    public array $statNameSpaces = [];
+    public int $statByteUsed = 1024;
+    public int $statByteUsedCompressed = 1024;
+    public string $fileConfig = 'autoloadone.json';
 
-    public $extension = '.php';
+    public string $extension = '.php';
 
     private $baseGen;
 
