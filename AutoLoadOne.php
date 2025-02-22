@@ -40,12 +40,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.30 2025-02-21
+ * @version   1.30.1 2025-02-21
  * @noautoload
  */
 class AutoLoadOne
 {
-    public const VERSION = '1.30';
+    public const VERSION = '1.30.1';
     public ?string $rooturl = '';
     public ?string $fileGen = '';
     public ?int $savefile = 1;
@@ -252,10 +252,10 @@ eot;
         $this->rooturl = $this->fixSeparator($this->getParameterCli('folder'));
         $this->fileGen = $this->fixSeparator($this->getParameterCli('filegen'));
         $this->fileGen = ($this->fileGen === '.') ? $this->rooturl : $this->fileGen;
-        $this->savefile = $this->getParameterCli('save');
+        $this->savefile = $this->getParameterCli('save')==="yes" ? 1:0;
         $this->savefileName = $this->getParameterCli('savefilename', 'autoload.php');
-        $this->stop = $this->getParameterCli('stop');
-        $this->compression = $this->getParameterCli('compression');
+        $this->stop = $this->getParameterCli('stop') === "yes" ? 1 : 0;
+        $this->compression = $this->getParameterCli('compression') === "yes" ? 1 : 0;
         $this->current = $this->getParameterCli('current', true);
         $this->excludeNS = $this->getParameterCli('excludens');
         $this->excludePath = $this->getParameterCli('excludepath');
@@ -338,6 +338,7 @@ eot;
                 $this->stop = @$_POST['stop'];
                 $this->compression = @$_POST['compression'];
             }
+            /** @noinspection PhpConditionAlreadyCheckedInspection */
             if ($this->button === 'logout') {
                 @session_destroy();
                 $this->logged = 0;

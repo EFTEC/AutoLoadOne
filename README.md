@@ -614,6 +614,8 @@ reads the composer.json files once.
   
 
 ## Version
+* 1.30.1 2025-02-21
+  * Fixed a problem with the command line. 
 * 1.30 2025-02-21
   * Fixed external path.
   * Fixed a warning with a float value.
