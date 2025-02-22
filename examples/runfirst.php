@@ -22,6 +22,8 @@ $auto->extension='.php'; // it's not required. By default it's .php
 $auto->rooturl=__DIR__; // this default value is optional, it's only for the example
 $auto->fileGen=__DIR__; // this default value is optional, it's only for the example
 $auto->savefile=1; // this default value is optional, it's only for the example
+$extpath=str_replace("examples","examplesexternal",__DIR__);
+$auto->externalPath=$extpath;
 $auto->init();
 $auto->process();
 $auto->render();

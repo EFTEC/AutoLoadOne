@@ -1,4 +1,5 @@
 /examples           export-ignore
+/examplesexternal   export-ignore
 /vendor             export-ignore
 /doc                export-ignore
 /tests              export-ignore

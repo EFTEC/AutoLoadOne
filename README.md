@@ -614,6 +614,9 @@ reads the composer.json files once.
   
 
 ## Version
+* 1.30 2025-02-21
+  * Fixed external path.
+  * Fixed a warning with a float value.
 * 1.29 2024-12-30
   * update dependencies. 
   * cleaned the code

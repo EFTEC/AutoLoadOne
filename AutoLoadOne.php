@@ -40,12 +40,12 @@ if (!defined('_AUTOLOAD_SAVEPARAM')) {
  *
  * @copyright Jorge Castro C. MIT License https://github.com/EFTEC/AutoLoadOne
  *
- * @version   1.29 2024-12-30
+ * @version   1.30 2025-02-21
  * @noautoload
  */
 class AutoLoadOne
 {
-    public const VERSION = '1.29';
+    public const VERSION = '1.30';
     public ?string $rooturl = '';
     public ?string $fileGen = '';
     public ?int $savefile = 1;
@@ -62,20 +62,18 @@ class AutoLoadOne
     public string $cli = '';
     public ?bool $logged = false;
     public string $current = '';
-    public int $t1 = 0;
+    public float $t1 = 0;
     public bool $debugMode = false;
     public int $statNumClass = 0;
     public int $statNumPHP = 0;
     public int $statConflict = 0;
     public int $statError = 0;
     public array $statNameSpaces = [];
-    public int $statByteUsed = 1024;
-    public int $statByteUsedCompressed = 1024;
+    public float $statByteUsed = 1024;
+    public float $statByteUsedCompressed = 1024;
     public string $fileConfig = 'autoloadone.json';
-
     public string $extension = '.php';
-
-    private $baseGen;
+    private string $baseGen = "";
 
     /**
      * AutoLoadOne constructor.
@@ -138,7 +136,7 @@ class AutoLoadOne
                     $buffer = str_replace('\\/', '/', $buffer);
                 }
                 if ($unescapeUnicode && function_exists('mb_convert_encoding')) {
-                    $buffer = preg_replace_callback('/(\\\\+)u([0-9a-f]{4})/i', static function ($match) {
+                    $buffer = preg_replace_callback('/(\\\\+)u([0-9a-f]{4})/i', static function($match) {
                         $l = strlen($match[1]);
                         if ($l % 2) {
                             $code = hexdec($match[2]);
@@ -400,7 +398,7 @@ eot;
     public function addLog($txt, string $type = ''): void
     {
         if (PHP_SAPI === 'cli') {
-            $txt = str_replace(array('<b>', '<i>', '</b>', '</i>'), array("\033[1m", "\033[4m", "\033[0m", "\033[0m"), $txt);
+            $txt = str_replace(['<b>', '<i>', '</b>', '</i>'], ["\033[1m", "\033[4m", "\033[0m", "\033[0m"], $txt);
             switch ($type) {
                 case 'error':
                 case 'staterror':
@@ -465,13 +463,14 @@ eot;
         // we add ,\n again.
         // we remove trailing \
         // we remove trailing /
-        return str_replace(array("\r\n", ",\n", "\n", '\\,', '/,'), array("\n", "\n", ",\n", ',', ','), $value);
+        return str_replace(["\r\n", ",\n", "\n", '\\,', '/,'], ["\n", "\n", ",\n", ',', ','], $value);
     }
 
     public function process(): void
     {
         $this->rooturl = $this->fixSeparator($this->rooturl);
         $this->fileGen = $this->fixSeparator($this->fileGen);
+        $this->externalPath = $this->fixSeparator($this->externalPath);
         if ($this->rooturl) {
             $this->baseGen = $this->dirNameLinux($this->fileGen . '/' . $this->getFileName());
             [$files, $json] = $this->listFolderFiles($this->rooturl);
@@ -490,9 +489,11 @@ eot;
                     $filesAbsolute[] = true;
                 }
             }
+            //die(1);
             $ns = [];
             $nsAlt = [];
             $pathAbsolute = [];
+            $pathAbsoluteExt = [];
             $autoruns = [];
             $autorunsFromJson = [];
             $autorunsFirst = [];
@@ -589,14 +590,22 @@ eot;
                                     if ($nsp === '') {
                                         $this->addLog("Adding Full map (empty namespace): <b>$altUrl -> $full</b> to class <i>$cs</i>", 'warning');
                                         $nsAlt[$altUrl] = $full;
-                                        $pathAbsolute[$altUrl] = $filesAbsolute[$key];
+                                        if ($this->externalPath !== "" && strpos($full, $this->externalPath) === 0) {
+                                            $pathAbsoluteExt[$altUrl] = $filesAbsolute[$key];
+                                        } else {
+                                            $pathAbsolute[$altUrl] = $filesAbsolute[$key];
+                                        }
                                     } elseif (isset($ns[$nsp])) {
                                         $mapped[] = $nsp . '\\' . $cs;
                                         $this->addLog("Reusing the folder: <b>$nsp -> $dir</b> to class <i>$cs</i>",
                                             'success');
                                     } else {
                                         $ns[$nsp] = $dir;
-                                        $pathAbsolute[$nsp] = $filesAbsolute[$key];
+                                        if ($this->externalPath !== "" && strpos($dir, $this->externalPath) === 0) {
+                                            $pathAbsoluteExt[$nsp] = $filesAbsolute[$key];
+                                        } else {
+                                            $pathAbsolute[$nsp] = $filesAbsolute[$key];
+                                        }
                                         $this->addLog("Adding Folder as namespace: <b>$nsp -> $dir</b> to class <i>$cs</i>", 'info');
                                     }
                                 }
@@ -614,7 +623,11 @@ eot;
                                 } else {
                                     $this->addLog("Adding Full relation: <b>$altUrl -> $full</b> to class <i>$cs</i>", 'warning');
                                     $nsAlt[$altUrl] = $full;
-                                    $pathAbsolute[$altUrl] = $filesAbsolute[$key];
+                                    if ($this->externalPath !== "" && strpos($full, $this->externalPath) === 0) {
+                                        $pathAbsoluteExt[$altUrl] = $filesAbsolute[$key];
+                                    } else {
+                                        $pathAbsolute[$altUrl] = $filesAbsolute[$key];
+                                    }
                                 }
                             }
                         }
@@ -641,7 +654,7 @@ eot;
                 $autoruns = array_merge($autorunsFirst, $autoruns);
                 $this->result =
                     $this->genautoload($this->fileGen . '/' . $this->getFileName(), $ns, $nsAlt, $pathAbsolute,
-                        $autoruns);
+                        $pathAbsoluteExt, $autoruns);
             }
             if ($this->statNumPHP === 0) {
                 $p = 100;
@@ -908,7 +921,7 @@ eot;
         return substr_compare($string, $test, $strlen - $testlen, $testlen) === 0;
     }
 
-    public function genautoload($file, $namespaces, $namespacesAlt, $pathAbsolute, $autoruns)
+    public function genautoload($file, $namespaces, $namespacesAlt, $pathAbsolute, $pathAbsoluteExt, $autoruns)
     {
         $template = "<?php" . <<<'EOD'
 
@@ -958,6 +971,9 @@ ${{tempname}}__arrautoloadCommon = [
  */
 ${{tempname}}__arrautoloadAbsolute = [
 {{includeabsolute}}
+];
+${{tempname}}__arrautoloadAbsoluteExt = [
+{{includeabsoluteext}}
 ];
 
 /**
@@ -1012,6 +1028,8 @@ function {{tempname}}__loadIfExists($className,$filename, $key,$arrayName='')
             $oldDir = getcwd();  // we copy the current url
             chdir(__DIR__);
         }
+    } elseif (isset($GLOBALS['{{tempname}}__arrautoloadAbsoluteExt'][$key])) {
+		$fullFile = {{tempname}}__replaceCurlyVariable($filename, $arrayName); // it's an absolute external path        
     } else {
         $fullFile = __DIR__ . '/' . {{tempname}}__replaceCurlyVariable($filename, $arrayName); // it's relative to this path
     }
@@ -1081,12 +1099,19 @@ EOD;
         $include = $this->createArrayPHP($namespaces);
         $htmlCommonNameAbs = $this->createArrayPHP($commonNameAbs);
         $includeAbsolute = '';
+        $includeAbsoluteExt = '';
         foreach ($pathAbsolute as $k => $v) {
             if ($v) {
                 $includeAbsolute .= "\t'$k' => true,\n";
             }
         }
+        foreach ($pathAbsoluteExt as $k => $v) {
+            if ($v) {
+                $includeAbsoluteExt .= "\t'$k' => true,\n";
+            }
+        }
         $includeAbsolute = rtrim($includeAbsolute, ",\n");
+        $includeAbsoluteExt = rtrim($includeAbsoluteExt, ",\n");
         $autorun = ''; //
         $excludePathArr = str_replace(["\n", "\r"], '', $this->excludePath);
         $excludePathArr = explode(',', $excludePathArr);
@@ -1103,15 +1128,16 @@ EOD;
             }
         }
         // 1024 is the memory used by code, *1.3 is an overhead, usually it's mess.
-        $this->statByteUsedCompressed = (strlen($include) + strlen($includeAbsolute) + strlen($custom)) * 1.3 + 1024;
+        $this->statByteUsedCompressed = (strlen($include) + strlen($includeAbsolute) + strlen($includeAbsoluteExt) + strlen($custom)) * 1.3 + 1024;
         $this->statByteUsed =
             (strlen($includeNotCompressed) + strlen($htmlCommonAbsolute) + strlen($htmlCommonNameAbs) +
-                strlen($includeAbsolute) + strlen($customNotCompressed)) * 1.3 + 1024;
-        $template = str_replace(array(
+                strlen($includeAbsolute) + strlen($includeAbsoluteExt) + strlen($customNotCompressed)) * 1.3 + 1024;
+        $template = str_replace([
             '{{custom}}',
             '{{include}}',
             '{{customCommon}}',
             '{{includeabsolute}}',
+            '{{includeabsoluteext}}',
             '{{includeCommon}}',
             '{{tempname}}',
             '{{autorun}}',
@@ -1119,11 +1145,12 @@ EOD;
             '{{version}}',
             '{{extension}}',
             '{{date}}'
-        ), array(
+        ], [
             $custom,
             $include,
             $htmlCommonAbsolute,
             $includeAbsolute,
+            $includeAbsoluteExt,
             $htmlCommonNameAbs,
             substr(uniqid('s'), 0, 6), // we don't need a long name.
             $autorun,
@@ -1133,7 +1160,7 @@ EOD;
             $this::VERSION,
             $this->extension,
             date('Y/m/d H:i:s')
-        ), $template);
+        ], $template);
         if ($this->savefile) {
             $ok = @file_put_contents($file, $template);
             if ($ok) {
@@ -1545,7 +1572,7 @@ TEM1;
 
 </html>    
 TEM1;
-            $web = str_replace(array(
+            $web = str_replace([
                 '{{rooturl}}',
                 '{{autorun_enable}}',
                 '{{fileGen}}',
@@ -1561,7 +1588,7 @@ TEM1;
                 '{{logstat}}',
                 '{{version}}',
                 '{{result}}'
-            ), array(
+            ], [
                 $this->rooturl,
                 _AUTOLOAD_COMPOSERJSON ? '<em><b></b>_AUTOLOAD_COMPOSERJSON=true</b> Composer.json autorun is considered. PHP files that contain the comment <b>"@autorun"</b> are executed (even if they don\'t have a class)</em><br>
                                         <em>PHP files that contain the comment <b>"@autorun first"</b> are executed with priority</em><br>'
@@ -1579,15 +1606,15 @@ TEM1;
                 $this->logStat,
                 $this::VERSION,
                 $this->result
-            ), $web);
+            ], $web);
             $this->cli = "php autoloadone.php -folder \"$this->rooturl\" -filegen \"$this->fileGen\" -save ";
             $tmp = ($this->compression ? 'yes' : 'no');
             $this->cli .= "-compression $tmp ";
-            $tmp = str_replace(array("\n", "\r"), '', $this->excludeNS);
+            $tmp = str_replace(["\n", "\r"], '', $this->excludeNS);
             $this->cli .= "-excludens \"$tmp\" ";
-            $tmp = str_replace(array("\n", "\r"), '', $this->externalPath);
+            $tmp = str_replace(["\n", "\r"], '', $this->externalPath);
             $this->cli .= "-externalpath \"$tmp\" ";
-            $tmp = str_replace(array("\n", "\r"), '', $this->excludePath);
+            $tmp = str_replace(["\n", "\r"], '', $this->excludePath);
             $this->cli .= "-excludepath \"$tmp\"";
             $web = str_replace('{{cli}}', $this->cli, $web);
             $t2 = microtime(true);
